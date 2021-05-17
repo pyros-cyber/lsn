@@ -21,6 +21,14 @@ add_executable(ex01.1
     src/ex01.1.cpp
 )
 
+add_executable(ex01.2
+    src/ex01.2.cpp
+)
+
+add_executable(ex01.3
+    src/ex01.3.cpp
+)
+
 # Our project will be able to build a library
 add_library(myLibrary
     src/random.cpp
@@ -38,6 +46,17 @@ target_link_libraries(
     ex01.1 PUBLIC 
     myLibrary
 )
+target_link_libraries(
+    ex01.2 PUBLIC 
+    myLibrary
+)
+
+target_link_libraries(
+    ex01.3 PUBLIC 
+    myLibrary
+)
 
 # Force the compiler to use the C++17 standard
 target_compile_features(ex01.1 PUBLIC cxx_std_17)
+target_compile_features(ex01.2 PUBLIC cxx_std_17)
+target_compile_features(ex01.3 PUBLIC cxx_std_17)
