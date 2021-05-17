@@ -24,6 +24,7 @@ add_executable(ex01
 # Our project will be able to build a library
 add_library(myLibrary
     src/random.cpp
+    src/myStatFunc.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
