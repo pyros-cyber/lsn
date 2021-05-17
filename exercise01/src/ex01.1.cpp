@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
   // Declaring and initializing "global" variables
   Random rnd("Primes", "seed.in");
   unsigned int M = 1000000, N = 100;
-  unsigned int L = M / N;
+  int L = M / N;
   vector<double> distribution(M);
   for (auto &elem : distribution) {
     elem = rnd.Rannyu();
@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
 
   /******************************************/
   /* Exercise 01.1.1
-  estimate <r> and its uncertainty
-  */
+   * estimate <r> and its uncertainty
+   */
   vector<double> ave(N);
   // Calculating the average of the N blocks
   auto distr_begin = distribution.begin();
@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
 
   /******************************************/
   /* Exercise 01.1.2
-  estimante <sigma^2> and its uncertainty
-  */
+   * estimate <sigma^2> and its uncertainty
+   */
   fill(ave.begin(), ave.end(), 0);
   fill(error.begin(), error.end(), 0);
   // Same as above, but this time we accumelate sigma^2 = (<r>-0.5)^2
@@ -83,8 +83,9 @@ int main(int argc, char *argv[]) {
   L = M / N;
 
   distribution.resize(M * N);
-  for (auto &elem : distribution)
+  for (auto &elem : distribution) {
     elem = rnd.Rannyu();
+  }
 
   // Opening the output stream
   out.open("results01.1.3.dat");
@@ -99,7 +100,7 @@ int main(int argc, char *argv[]) {
       events[static_cast<int>(distribution[i * M + j] * N)]++;
     }
     for (int j{}; j < N; j++) {
-      chi_sq += static_cast<double>(pow(events[i] - L, 2) / L);
+      chi_sq += static_cast<double>(pow(events[j] - L, 2) / L);
     }
     out << chi_sq << endl;
     chi_sq = 0.;
