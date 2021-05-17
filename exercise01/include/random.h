@@ -32,8 +32,11 @@ public:
   void SetRandom(int *, int, int);
   void SaveSeed();
   double Rannyu(void);
-  double Rannyu(double min, double max);
-  double Gauss(double mean, double sigma);
+  double Rannyu(double, double);
+  double Gauss(double, double);
+  double Exp(double);
+  double Lorentz(double, double);
+  double Buffon_Angle();
 };
 
 #endif // RANDOM_H

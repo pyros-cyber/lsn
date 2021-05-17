@@ -65,22 +65,9 @@ void Random ::SaveSeed() {
   WriteSeed.open("seed.out");
   if (WriteSeed.is_open()) {
     WriteSeed << l1 << " " << l2 << " " << l3 << " " << l4 << endl;
-    ;
   } else
     cerr << "PROBLEM: Unable to open random.out" << endl;
   WriteSeed.close();
-  return;
-}
-
-double Random ::Gauss(double mean, double sigma) {
-  double s = Rannyu();
-  double t = Rannyu();
-  double x = sqrt(-2. * log(1. - s)) * cos(2. * M_PI * t);
-  return mean + x * sigma;
-}
-
-double Random ::Rannyu(double min, double max) {
-  return min + (max - min) * Rannyu();
 }
 
 double Random ::Rannyu(void) {
@@ -101,6 +88,32 @@ double Random ::Rannyu(void) {
   r = twom12 * (l1 + twom12 * (l2 + twom12 * (l3 + twom12 * (l4))));
 
   return r;
+}
+
+double Random ::Rannyu(double min, double max) {
+  return min + (max - min) * Rannyu();
+}
+
+double Random ::Gauss(double mean, double sigma) {
+  double s = Rannyu();
+  double t = Rannyu();
+  double x = sqrt(-2. * log(1. - s)) * cos(2. * M_PI * t);
+  return mean + x * sigma;
+}
+
+double Random::Exp(double lambda) { return -log(1. - Rannyu()) / lambda; }
+
+double Random::Lorentz(double gamma, double mu) {
+  return mu + gamma * tan(M_PI * (Rannyu() - 0.5));
+}
+double Random::Buffon_Angle() {
+  double x, y, r;
+  do {
+    x = this->Rannyu();
+    y = this->Rannyu();
+    r = sqrt(x * x + y * y);
+  } while (r >= 1.);
+  return acos(x / r);
 }
 /****************************************************************
 *****************************************************************
