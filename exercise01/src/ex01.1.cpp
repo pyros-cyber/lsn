@@ -105,5 +105,9 @@ int main(int argc, char *argv[]) {
     out << chi_sq << endl;
     chi_sq = 0.;
   }
+
+  out.close();
+  rnd.SaveSeed();
+
   return 0;
 }
