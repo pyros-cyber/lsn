@@ -17,8 +17,8 @@ project(ex01
 #enable_testing()
 
 # Our "project" will be able to build an executable out of a C++ source file
-add_executable(ex01
-    src/ex01.cpp
+add_executable(ex01.1
+    src/ex01.1.cpp
 )
 
 # Our project will be able to build a library
@@ -35,10 +35,9 @@ target_include_directories(myLibrary PUBLIC
 
 # Target commands tells which dependencies targer exec have
 target_link_libraries(
-    ex01 PUBLIC 
+    ex01.1 PUBLIC 
     myLibrary
 )
 
 # Force the compiler to use the C++17 standard
-# Force the compiler to use the C++17 standard
-target_compile_features(ex01 PUBLIC cxx_std_17)
+target_compile_features(ex01.1 PUBLIC cxx_std_17)
