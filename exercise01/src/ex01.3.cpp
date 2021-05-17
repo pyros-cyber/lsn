@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
       for (int j{}; j < throws_per_block; j++) {
         double x = rnd.Rannyu(0., d);
         double angle = rnd.Buffon_Angle();
-        if ((x - L / 2. * angle) <= 0. || (x + L / 2. * angle) >= d)
+        if ((x - L / 2. * cos(angle)) <= 0. || (x + L / 2. * cos(angle)) >= d)
           hit++;
       }
       av = static_cast<double>(2 * L * throws_per_block / (hit * d));
