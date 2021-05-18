@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
   /*************************/
   /* Exercise 02.1.2
-  estimanate the integral with non uniform sampling
+  estimate the integral with non uniform sampling
   with good approx function, using rejection method
   */
   fill(integral.begin(), integral.end(), 0.);
