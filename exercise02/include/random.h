@@ -14,6 +14,7 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
 
 class Random {
@@ -37,6 +38,7 @@ public:
   double Exp(double);
   double Lorentz(double, double);
   double Buffon_Angle();
+  double Accept_Reject(std::function<double(double)>, double);
 };
 
 #endif // RANDOM_H

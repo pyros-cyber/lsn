@@ -106,6 +106,7 @@ double Random::Exp(double lambda) { return -log(1. - Rannyu()) / lambda; }
 double Random::Lorentz(double gamma, double mu) {
   return mu + gamma * tan(M_PI * (Rannyu() - 0.5));
 }
+
 double Random::Buffon_Angle() {
   double x, y, r;
   do {
@@ -114,6 +115,14 @@ double Random::Buffon_Angle() {
     r = sqrt(x * x + y * y);
   } while (r >= 1.);
   return acos(x / r);
+}
+double Random::Accept_Reject(std::function<double(double)> f, double max) {
+  double x = 0., r = 0.;
+  do {
+    x = this->Rannyu();
+    r = this->Rannyu();
+  } while (r >= f(x) / max);
+  return x;
 }
 /****************************************************************
 *****************************************************************
