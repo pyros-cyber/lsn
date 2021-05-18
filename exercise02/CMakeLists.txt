@@ -29,6 +29,7 @@ add_executable(ex02.2
 add_library(myLibrary
     src/random.cpp
     src/myStatFunc.cpp
+    src/randomWalk.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
