@@ -11,7 +11,7 @@ using namespace std;
 
 // Integrand function to evaluate
 inline double integrand(double x) { return M_PI_2 * cos(M_PI_2 * x); }
-inline double reject_distribution(double x) { return 1 + M_PI_2 * (1 / 2 - x); }
+inline double reject_distribution(double x) { return 1 + M_PI_2 * (0.5 - x); }
 int main(int argc, char *argv[]) {
   // Variables
   Random rnd("Primes", "seed.in");
@@ -25,8 +25,9 @@ int main(int argc, char *argv[]) {
   vector<double> integral(N);
   vector<double> samples(M);
 
-  for (auto elem : samples)
+  for (auto &elem : samples) {
     elem = integrand(rnd.Rannyu());
+  }
 
   for (int i{}; i < N; i++) {
     integral[i] = accumulate(samples.begin() + i * throws_per_block,
@@ -59,7 +60,7 @@ int main(int argc, char *argv[]) {
 
   // upper bound of reject_distribution
   double max = 1. + M_PI * 0.25;
-  for (auto elem : samples) {
+  for (auto &elem : samples) {
     double x = rnd.Accept_Reject(reject_distribution, max);
     elem = integrand(x) / reject_distribution(x);
   }
