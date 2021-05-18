@@ -116,6 +116,22 @@ double Random::Buffon_Angle() {
   } while (r >= 1.);
   return acos(x / r);
 }
+
+double Random::Solid_Angle(double &theta, double &phi) {
+  double x, y, z, r_sq;
+  do {
+    x = this->Rannyu(-1., 1.);
+    y = this->Rannyu(-1., 1.);
+    z = this->Rannyu(-1., 1.);
+    r_sq = x * x + y * y + z * z;
+  } while (r_sq >= 1.);
+  theta = acos(z / sqrt(r_sq));
+  if (y < 0.) {
+    phi = -acos(x / (sqrt(r_sq) * sin(theta)));
+  } else {
+    phi = acos(x / (sqrt(r_sq) * sin(theta)));
+  }
+}
 double Random::Accept_Reject(std::function<double(double)> f, double max) {
   double x = 0., r = 0.;
   do {

@@ -38,6 +38,7 @@ public:
   double Exp(double);
   double Lorentz(double, double);
   double Buffon_Angle();
+  double Solid_Angle(double &, double &);
   double Accept_Reject(std::function<double(double)>, double);
 };
 
