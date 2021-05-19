@@ -117,7 +117,7 @@ double Random::Buffon_Angle() {
   return acos(x / r);
 }
 
-double Random::Solid_Angle(double &theta, double &phi) {
+void Random::Solid_Angle(double &theta, double &phi) {
   double x, y, z, r_sq;
   do {
     x = this->Rannyu(-1., 1.);
