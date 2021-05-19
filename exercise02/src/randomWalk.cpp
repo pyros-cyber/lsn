@@ -10,7 +10,7 @@ void DiscreteWalk::set_distance() {
   distance_from_origin = sqrt(d_sq);
 }
 
-void DiscreteWalk::walk(shared_ptr<Random> rnd) {
+void DiscreteWalk::walk(Random *rnd) {
   int chosen_nn = static_cast<int>(rnd->Rannyu(1, 7));
   if (chosen_nn % 2 == 0) {
     position[chosen_nn / 2 - 1] += 1;
@@ -21,7 +21,7 @@ void DiscreteWalk::walk(shared_ptr<Random> rnd) {
   n_step++;
 }
 
-void ContinuosWalk::set_distance() {
+void ContinuousWalk::set_distance() {
   double d_sq = 0.;
   for (auto &elem : position) {
     d_sq += elem * elem;
@@ -29,7 +29,7 @@ void ContinuosWalk::set_distance() {
   distance_from_origin = sqrt(d_sq);
 }
 
-void ContinuosWalk::walk(shared_ptr<Random> rnd) {
+void ContinuousWalk::walk(Random *rnd) {
   double theta = 0., phi = 0.;
   rnd->Solid_Angle(theta, phi);
   position[0] += sin(theta) * cos(phi);

@@ -9,7 +9,7 @@ struct randomWalk {
   double distance_from_origin;
 
   virtual void set_distance() = 0;
-  virtual void walk(std::shared_ptr<Random>) = 0;
+  virtual void walk(Random *) = 0;
 };
 
 struct DiscreteWalk : public randomWalk {
@@ -20,18 +20,18 @@ struct DiscreteWalk : public randomWalk {
       elem = 0;
   }
   void set_distance();
-  void walk(std::shared_ptr<Random>);
+  void walk(Random *);
 };
 
-struct ContinuosWalk : public randomWalk {
+struct ContinuousWalk : public randomWalk {
   double position[3];
 
-  ContinuosWalk() {
+  ContinuousWalk() {
     for (auto &elem : position)
       elem = 0.;
   }
   void set_distance();
-  void walk(std::shared_ptr<Random>);
+  void walk(Random *);
 };
 
 #endif
