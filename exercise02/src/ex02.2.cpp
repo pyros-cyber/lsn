@@ -20,14 +20,14 @@ int main(int argc, char *argv[]) {
   ofstream out("results02.2.discrete.dat");
   ofstream out1("results02.2.discrete.error.dat");
 
-  if (out.is_open() && out.is_open()) {
+  if (out.is_open() && out1.is_open()) {
     for (int i{}; i < steps; i++) {
       vector<double> r_sqDiscrete(N);
       for (int j{}; j < N; j++) {
         for (int k{}; k < throws_per_block; k++) {
           shared_ptr<randomWalk> w = make_shared<DiscreteWalk>();
           for (int l{}; l < i; l++) {
-            w->walk(make_shared<Random>(rnd));
+            w->walk(&rnd);
           }
           r_sqDiscrete[j] += pow(w->distance_from_origin, 2);
         }
@@ -45,5 +45,46 @@ int main(int argc, char *argv[]) {
   } else {
     cerr << "ERROR: can't open output files" << endl;
   }
+
+  out.close();
+  out1.close();
+
+  /*************/
+  /*Exercise 02.2.2
+  simulate a 3d random walk on a continuos lattice
+  */
+
+  out.open("results02.2.continuous.dat");
+  out1.open("results02.2.continuous.error.dat");
+
+  if (out.is_open() && out1.is_open()) {
+    for (int i{}; i < steps; i++) {
+      vector<double> r_sqContinuous(N);
+      for (int j{}; j < N; j++) {
+        for (int k{}; k < throws_per_block; k++) {
+          shared_ptr<randomWalk> w = make_shared<ContinuousWalk>();
+          for (int l{}; l < i; l++) {
+            w->walk(&rnd);
+          }
+          r_sqContinuous[j] += pow(w->distance_from_origin, 2);
+        }
+        r_sqContinuous[j] /= static_cast<double>(throws_per_block);
+      }
+      vector<double> error = blocking_error(r_sqContinuous);
+      out << i << " " << sqrt(r_sqContinuous[N - 1]) << " " << error[N - 1]
+          << endl;
+      if (i == steps - 1) {
+        for (int j{}; j < N; j++) {
+          out1 << j << " " << r_sqContinuous[j] << " " << error[j] << endl;
+        }
+      }
+    }
+  } else {
+    cerr << "ERROR: can't open output files" << endl;
+  }
+
+  out.close();
+  out1.close();
+
   return 0;
 }
