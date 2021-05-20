@@ -14,7 +14,7 @@ inline double integrand(double x) { return M_PI_2 * cos(M_PI_2 * x); }
 inline double reject_distribution(double x) { return 1 + M_PI_2 * (0.5 - x); }
 int main(int argc, char *argv[]) {
   // Variables
-  Random rnd("Primes", "seed.in");
+  Random rnd("../Primes", "../seed.in");
   unsigned int N = 100, M = 100000;
   int throws_per_block = M / N;
 

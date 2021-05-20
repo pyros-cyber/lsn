@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   // Variables
-  Random rnd("Primes", "seed.in");
+  Random rnd("../Primes", "../seed.in");
   unsigned int N = 100, M = 100000, steps = 100;
   int throws_per_block = M / N;
 
