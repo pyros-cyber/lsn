@@ -86,5 +86,6 @@ int main(int argc, char *argv[]) {
 
   out.close();
 
+  rnd.SaveSeed();
   return 0;
 }
