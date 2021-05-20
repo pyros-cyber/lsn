@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 
   // Declaring variables
-  Random rnd("Primes", "seed.in");
+  Random rnd("../Primes", "../seed.in");
   unsigned int M = 10000;
   double lambda = 1., mu = 1., gamma = 1.;
   vector<int> N = {1, 2, 10, 100};

@@ -12,7 +12,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   // Declaring and initializing "global" variables
-  Random rnd("Primes", "seed.in");
+  Random rnd("../Primes", "../seed.in");
   unsigned int M = 1000000, N = 100;
   int L = M / N;
   vector<double> distribution(M);

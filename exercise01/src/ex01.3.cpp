@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 
   // Declaring variables
-  Random rnd("Primes", "seed.in");
+  Random rnd("../Primes", "../seed.in");
   // L: length of the needle, d: space between lines
   double L = 0.5, d = 1.;
   double av = 0., av2 = 0., sum = 0., sum2 = 0., err = 0.;
