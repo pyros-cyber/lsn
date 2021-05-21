@@ -1,62 +1,47 @@
-/****************************************************************
-*****************************************************************
-    _/    _/  _/_/_/  _/       Numerical Simulation Laboratory
-   _/_/  _/ _/       _/       Physics Department
-  _/  _/_/    _/    _/       Universita' degli Studi di Milano
- _/    _/       _/ _/       Prof. D.E. Galli
-_/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
-*****************************************************************
-*****************************************************************/
-#include <stdlib.h>     // srand, rand: to generate random number
-#include <iostream>     // cin, cout: Standard Input/Output Streams Library
-#include <fstream>      // Stream class to both read and write from/to files.
-#include <cmath>        // rint, pow
 #include "MolDyn_NVE.h"
 
-using namespace std;
+void MolDyn_NVE::Input(string simParameters) {
+  Epot = "results/epot.dat";
+  Ekin = "results/ekin.dat";
+  Temp = "results/temp.dat";
+  Etot = "results/etot.dat";
+  Press = "results/press.dat";
 
-int main(){ 
-  Input();             //Inizialization
-  int nconf = 1;
-  for(int istep=1; istep <= nstep; ++istep){
-     Move();           //Move particles with Verlet algorithm
-     if(istep%iprint == 0) cout << "Number of time-steps: " << istep << endl;
-     if(istep%10 == 0){
-        Measure();     //Properties measurement
-//        ConfXYZ(nconf);//Write actual configuration in XYZ format //Commented to avoid "filesystem full"! 
-        nconf += 1;
-     }
+  ifstream ReadInput(simParameters);
+  if (ReadInput.fail()) {
+    cerr << "ERROR: unable to open " << simParameters << " file" << endl;
+    exit(1);
   }
-  ConfFinal();         //Write final configuration to restart
-
-  return 0;
-}
-
-
-void Input(void){ //Prepare all stuff for the simulation
-  ifstream ReadInput,ReadConf;
-  double ep, ek, pr, et, vir;
 
   cout << "Classic Lennard-Jones fluid        " << endl;
   cout << "Molecular dynamics simulation in NVE ensemble  " << endl << endl;
-  cout << "Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]" << endl << endl;
+  cout << "Interatomic potential v(r) = 4 * [(1/r)^12 - (1/r)^6]" << endl
+       << endl;
   cout << "The program uses Lennard-Jones units " << endl;
 
-  seed = 1;    //Set seed for random numbers
-  srand(seed); //Initialize random number generator
-  
-  ReadInput.open("input.dat"); //Read input
-
+  // reading simulation & physical parameters from the input file
   ReadInput >> temp;
-
   ReadInput >> npart;
-  cout << "Number of particles = " << npart << endl;
+  // resizing of vectors containing simulations' info
+  x.resize(npart);
+  y.resize(npart);
+  z.resize(npart);
+  xold.resize(npart);
+  yold.resize(npart);
+  zold.resize(npart);
+  vx.resize(npart);
+  vy.resize(npart);
+  vz.resize(npart);
+  fx.resize(npart);
+  fy.resize(npart);
+  fz.resize(npart);
 
+  cout << "Number of particles = " << npart << endl;
   ReadInput >> rho;
   cout << "Density of particles = " << rho << endl;
-  vol = (double)npart/rho;
+  vol = static_cast<double>(npart / rho);
   cout << "Volume of the simulation box = " << vol << endl;
-  box = pow(vol,1.0/3.0);
+  box = pow(vol, 1. / 3.);
   cout << "Edge of the simulation box = " << box << endl;
 
   ReadInput >> rcut;
@@ -64,84 +49,227 @@ void Input(void){ //Prepare all stuff for the simulation
   ReadInput >> nstep;
   ReadInput >> iprint;
 
-  cout << "The program integrates Newton equations with the Verlet method " << endl;
+  cout << "The program integrates Newton equations with the Verlet method "
+       << endl;
   cout << "Time step = " << delta << endl;
   cout << "Number of steps = " << nstep << endl << endl;
+
+  ReadInput >> measure_time_interval;
+  cout << "Measures performed every " << measure_time_interval << " time steps."
+       << endl;
+  ReadInput >> n_blocks;
+  std::cout << "Statistical error computed with " << n_blocks << " blocks."
+            << endl
+            << endl;
+
+  // resizing of vectors to perform the blocking averages
+  est_pot.resize(n_blocks);
+  est_kin.resize(n_blocks);
+  est_etot.resize(n_blocks);
+  est_temp.resize(n_blocks);
+  est_press.resize(n_blocks);
+  // initializing them to zero
+  fill(est_pot.begin(), est_pot.end(), 0.);
+  fill(est_kin.begin(), est_kin.end(), 0.);
+  fill(est_etot.begin(), est_etot.end(), 0.);
+  fill(est_temp.begin(), est_temp.end(), 0.);
+  fill(est_press.begin(), est_press.end(), 0.);
+
   ReadInput.close();
 
-//Prepare array for measurements
-  iv = 0; //Potential energy
-  ik = 1; //Kinetic energy
-  ie = 2; //Total energy
-  it = 3; //Temperature
-  n_props = 4; //Number of observables
-
-//Read initial configuration
-  cout << "Read initial configuration from file config.0 " << endl << endl;
-  ReadConf.open("config.0");
-  for (int i=0; i<npart; ++i){
-    ReadConf >> x[i] >> y[i] >> z[i];
-    x[i] = x[i] * box;
-    y[i] = y[i] * box;
-    z[i] = z[i] * box;
-  }
-  ReadConf.close();
-
-//Prepare initial velocities
-   cout << "Prepare random velocities with center of mass velocity equal to zero " << endl << endl;
-   double sumv[3] = {0.0, 0.0, 0.0};
-   for (int i=0; i<npart; ++i){
-     vx[i] = rand()/double(RAND_MAX) - 0.5;
-     vy[i] = rand()/double(RAND_MAX) - 0.5;
-     vz[i] = rand()/double(RAND_MAX) - 0.5;
-
-     sumv[0] += vx[i];
-     sumv[1] += vy[i];
-     sumv[2] += vz[i];
-   }
-   for (int idim=0; idim<3; ++idim) sumv[idim] /= (double)npart;
-   double sumv2 = 0.0, fs;
-   for (int i=0; i<npart; ++i){
-     vx[i] = vx[i] - sumv[0];
-     vy[i] = vy[i] - sumv[1];
-     vz[i] = vz[i] - sumv[2];
-
-     sumv2 += vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i];
-   }
-   sumv2 /= (double)npart;
-
-   fs = sqrt(3 * temp / sumv2);   // fs = velocity scale factor 
-   for (int i=0; i<npart; ++i){
-     vx[i] *= fs;
-     vy[i] *= fs;
-     vz[i] *= fs;
-
-     xold[i] = Pbc(x[i] - vx[i] * delta);
-     yold[i] = Pbc(y[i] - vy[i] * delta);
-     zold[i] = Pbc(z[i] - vz[i] * delta);
-   }
-   return;
+  // compute block size (for the blocking averages) and setting block index
+  block_size = (nstep / measure_time_interval) / n_blocks;
+  iblock = 0;
+  imeasure = 0;
 }
 
+MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile)
+    : rand{"../Primes", "../seed.in"} {
 
-void Move(void){ //Move particles with Verlet algorithm
-  double xnew, ynew, znew, fx[m_part], fy[m_part], fz[m_part];
+  Input(simParameters);
 
-  for(int i=0; i<npart; ++i){ //Force acting on particle i
-    fx[i] = Force(i,0);
-    fy[i] = Force(i,1);
-    fz[i] = Force(i,2);
+  // Read initial configuration from the configuration file
+  // we are starting from scratch our simulation in this CONSTRUCTOR
+  cout << "Read initial configuration from file " + configFile << endl << endl;
+
+  ifstream ReadConf(configFile);
+  if (ReadConf.is_open()) {
+    for (int i{}; i < npart; ++i) {
+      ReadConf >> x[i] >> y[i] >> z[i];
+      x[i] = x[i] * box;
+      y[i] = y[i] * box;
+      z[i] = z[i] * box;
+    }
+  } else {
+    cerr << "ERROR: can't read configuration from: " << configFile
+         << ". Stopping simulation." << endl;
+    exit(1);
   }
 
-  for(int i=0; i<npart; ++i){ //Verlet integration scheme
+  ReadConf.close();
 
-    xnew = Pbc( 2.0 * x[i] - xold[i] + fx[i] * pow(delta,2) );
-    ynew = Pbc( 2.0 * y[i] - yold[i] + fy[i] * pow(delta,2) );
-    znew = Pbc( 2.0 * z[i] - zold[i] + fz[i] * pow(delta,2) );
+  // Prepare initial velocities
+  cout << "Prepare random velocities with Maxwell-Boltzmann distribution"
+       << endl;
+  double sumv[3] = {};
+  for (int i{}; i < npart; ++i) {
+    vx[i] = rand.Rannyu() - 0.5;
+    vy[i] = rand.Rannyu() - 0.5;
+    vz[i] = rand.Rannyu() - 0.5;
 
-    vx[i] = Pbc(xnew - xold[i])/(2.0 * delta);
-    vy[i] = Pbc(ynew - yold[i])/(2.0 * delta);
-    vz[i] = Pbc(znew - zold[i])/(2.0 * delta);
+    sumv[0] += vx[i];
+    sumv[1] += vy[i];
+    sumv[2] += vz[i];
+  }
+  for (auto &elem : sumv) {
+    elem /= static_cast<double>(npart);
+  }
+  // fs: velocity scale factor
+  double sumv_sq = 0., fs;
+  for (int i{}; i < npart; ++i) {
+    vx[i] = vx[i] - sumv[0];
+    vy[i] = vy[i] - sumv[1];
+    vz[i] = vz[i] - sumv[2];
+
+    sumv_sq += vx[i] * vx[i] + vy[i] * vy[i] + vz[i] * vz[i];
+  }
+  sumv_sq /= static_cast<double>(npart);
+  fs = sqrt(3 * double(temp) / sumv_sq);
+
+  for (int i{}; i < npart; ++i) {
+    vx[i] *= fs;
+    vy[i] *= fs;
+    vz[i] *= fs;
+    xold[i] = Pbc(x[i] - vx[i] * delta);
+    yold[i] = Pbc(y[i] - vy[i] * delta);
+    zold[i] = Pbc(z[i] - vz[i] * delta);
+  }
+}
+
+MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile,
+                       string oldConfigFile)
+    : rand{"../Primes", "../seed.in"} {
+
+  Input(simParameters);
+
+  // Read initial configuration from the configuration file (final in this
+  // case!)
+  cout << "Read initial configuration from file " + configFile << endl << endl;
+
+  ifstream ReadConf(configFile);
+  if (ReadConf.is_open()) {
+    for (int i{}; i < npart; ++i) {
+      ReadConf >> x[i] >> y[i] >> z[i];
+      x[i] = x[i] * box;
+      y[i] = y[i] * box;
+      z[i] = z[i] * box;
+    }
+  } else {
+    cerr << "ERROR: can't read configuration from: " << configFile
+         << ". Stopping simulation." << endl;
+    exit(1);
+  }
+  ReadConf.close();
+  ReadConf.clear();
+
+  // read previous configuration file (from old simulation)
+  cout << "Read old configuration from file " + oldConfigFile << endl << endl;
+  ReadConf.open(oldConfigFile);
+  if (ReadConf.is_open()) {
+    for (int i{}; i < npart; ++i) {
+      ReadConf >> xold[i] >> yold[i] >> zold[i];
+      xold[i] = xold[i] * box;
+      yold[i] = yold[i] * box;
+      zold[i] = zold[i] * box;
+    }
+  } else {
+    cerr << "ERROR: can't read configuration from: " << oldConfigFile
+         << ". Stopping simulation." << endl;
+    exit(1);
+  }
+  ReadConf.close();
+  ReadConf.clear();
+
+  // we compute the forces acting on the particles to use them in
+  // the Verlet algorithm (take a look at the loop below:)
+  // x(t+dt) = 2x(t) - x(t-dt) + F(t)dt^2/m (with PBCs)
+  Move();
+
+  // ESTIMATE for TEMPERATURE
+  double t = 0.;
+  for (int i{}; i < npart; ++i) {
+    t += vx[i] * vx[i] + vy[i] * vy[i] + vz[i] * vz[i];
+  }
+  stima_temp = t / (npart * 3.);
+
+  double fs = sqrt(temp / stima_temp);
+  cout << "scaling factor = " << fs << endl;
+
+  // updating velocities and positions
+  for (int i{}; i < npart; ++i) {
+    vx[i] *= fs;
+    vy[i] *= fs;
+    vz[i] *= fs;
+
+    double xi = xold[i];
+    double yi = yold[i];
+    double zi = zold[i];
+
+    xold[i] = Pbc(x[i] - 2. * vx[i] * delta);
+    yold[i] = Pbc(y[i] - 2. * vy[i] * delta);
+    zold[i] = Pbc(z[i] - 2. * vz[i] * delta);
+
+    x[i] = xi;
+    y[i] = yi;
+    z[i] = zi;
+  }
+}
+
+void MolDyn_NVE::ConfXYZ(int nconf) const {
+  ofstream WriteXYZ("frames/config_" + to_string(nconf) + ".xyz");
+
+  if (WriteXYZ.is_open()) {
+    WriteXYZ << npart << endl;
+    WriteXYZ << "This is only a comment!" << endl;
+    for (int i{}; i < npart; ++i) {
+      WriteXYZ << "LJ  " << Pbc(x[i]) << "   " << Pbc(y[i]) << "   "
+               << Pbc(z[i]) << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open output XYZ file." << endl;
+    exit(1);
+  }
+  WriteXYZ.close();
+}
+
+void MolDyn_NVE::ConfFinal(string filename) const {
+  ofstream WriteConf(filename);
+
+  if (WriteConf.is_open()) {
+    cout << "Print configuration to " + filename << endl;
+    for (int i{}; i < npart; i++) {
+      WriteConf << x[i] / box << " " << y[i] / box << " " << z[i] / box << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open " << filename << endl;
+    exit(1);
+  }
+  WriteConf.close();
+}
+
+// Move particles with Verlet algorithm
+void MolDyn_NVE::Move() {
+  double xnew, ynew, znew;
+  Force();
+  // Verlet integration scheme
+  for (int i{}; i < npart; ++i) {
+    xnew = Pbc(2.0 * x[i] - xold[i] + fx[i] * pow(delta, 2));
+    ynew = Pbc(2.0 * y[i] - yold[i] + fy[i] * pow(delta, 2));
+    znew = Pbc(2.0 * z[i] - zold[i] + fz[i] * pow(delta, 2));
+
+    vx[i] = Pbc(xnew - xold[i]) / (2.0 * delta);
+    vy[i] = Pbc(ynew - yold[i]) / (2.0 * delta);
+    vz[i] = Pbc(znew - zold[i]) / (2.0 * delta);
 
     xold[i] = x[i];
     yold[i] = y[i];
@@ -151,121 +279,211 @@ void Move(void){ //Move particles with Verlet algorithm
     y[i] = ynew;
     z[i] = znew;
   }
-  return;
 }
 
-double Force(int ip, int idir){ //Compute forces as -Grad_ip V(r)
-  double f=0.0;
-  double dvec[3], dr;
+// Compute forces as -Grad_ip V(r)
+void MolDyn_NVE::Force() {
 
-  for (int i=0; i<npart; ++i){
-    if(i != ip){
-      dvec[0] = Pbc( x[ip] - x[i] );  // distance ip-i in pbc
-      dvec[1] = Pbc( y[ip] - y[i] );
-      dvec[2] = Pbc( z[ip] - z[i] );
+  double d1, d2, d3, dr;
+  double multiplier;
+  fill(fx.begin(), fx.end(), 0.);
+  fill(fy.begin(), fy.end(), 0.);
+  fill(fz.begin(), fz.end(), 0.);
 
-      dr = dvec[0]*dvec[0] + dvec[1]*dvec[1] + dvec[2]*dvec[2];
-      dr = sqrt(dr);
+  for (int j{}; j < npart; ++j) {
+    for (int i{}; i < npart; ++i) {
+      if (i != j) {
+        // distance j-i in pbc
+        d1 = Pbc(x[j] - x[i]);
+        d2 = Pbc(y[j] - y[i]);
+        d3 = Pbc(z[j] - z[i]);
+        dr = sqrt(d1 * d1 + d2 * d2 + d3 * d3);
 
-      if(dr < rcut){
-        f += dvec[idir] * (48.0/pow(dr,14) - 24.0/pow(dr,8)); // -Grad_ip V(r)
+        if (dr < rcut) {
+          // -Grad_ip V(r)
+          multiplier = (48.0 / pow(dr, 14) - 24.0 / pow(dr, 8));
+          fx[j] += d1 * multiplier;
+          fy[j] += d2 * multiplier;
+          fz[j] += d3 * multiplier;
+        }
       }
     }
   }
-  
-  return f;
 }
 
-void Measure(){ //Properties measurement
-  int bin;
-  double v, t, vij;
+// Properties measurement
+void MolDyn_NVE::Measure() {
+  double v = 0., t = 0.;
   double dx, dy, dz, dr;
-  ofstream Epot, Ekin, Etot, Temp;
 
-  Epot.open("output_epot.dat",ios::app);
-  Ekin.open("output_ekin.dat",ios::app);
-  Temp.open("output_temp.dat",ios::app);
-  Etot.open("output_etot.dat",ios::app);
+  stima_press = 0.;
+  // cycle over pairs of particles
+  for (int i{}; i < npart - 1; ++i) {
+    for (int j{i + 1}; j < npart; ++j) {
+      // here I use old configurations [old = r(t)]
+      // to be compatible with EKin which uses v(t)
+      // => EPot should be computed with r(t)
+      dx = Pbc(xold[i] - xold[j]);
+      dy = Pbc(yold[i] - yold[j]);
+      dz = Pbc(zold[i] - zold[j]);
+      dr = sqrt(dx * dx + dy * dy + dz * dz);
 
-  v = 0.0; //reset observables
-  t = 0.0;
-
-//cycle over pairs of particles
-  for (int i=0; i<npart-1; ++i){
-    for (int j=i+1; j<npart; ++j){
-
-     dx = Pbc( xold[i] - xold[j] ); // here I use old configurations [old = r(t)]
-     dy = Pbc( yold[i] - yold[j] ); // to be compatible with EKin which uses v(t)
-     dz = Pbc( zold[i] - zold[j] ); // => EPot should be computed with r(t)
-
-     dr = dx*dx + dy*dy + dz*dz;
-     dr = sqrt(dr);
-
-     if(dr < rcut){
-       vij = 4.0/pow(dr,12) - 4.0/pow(dr,6);
-
-//Potential energy
-       v += vij;
-     }
-    }          
+      if (dr < rcut) {
+        // Potential energy
+        v += 4.0 / pow(dr, 12) - 4.0 / pow(dr, 6);
+        stima_press += 1. / pow(dr, 12) - 0.5 / pow(dr, 6);
+      }
+    }
   }
 
-//Kinetic energy
-  for (int i=0; i<npart; ++i) t += 0.5 * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
-   
-    stima_pot = v/(double)npart; //Potential energy per particle
-    stima_kin = t/(double)npart; //Kinetic energy per particle
-    stima_temp = (2.0 / 3.0) * t/(double)npart; //Temperature
-    stima_etot = (t+v)/(double)npart; //Total energy per particle
-
-    Epot << stima_pot  << endl;
-    Ekin << stima_kin  << endl;
-    Temp << stima_temp << endl;
-    Etot << stima_etot << endl;
-
-    Epot.close();
-    Ekin.close();
-    Temp.close();
-    Etot.close();
-
-    return;
-}
-
-
-void ConfFinal(void){ //Write final configuration
-  ofstream WriteConf;
-
-  cout << "Print final configuration to file config.final " << endl << endl;
-  WriteConf.open("config.final");
-
-  for (int i=0; i<npart; ++i){
-    WriteConf << x[i]/box << "   " <<  y[i]/box << "   " << z[i]/box << endl;
+  // Kinetic energy
+  for (int i{}; i < npart; ++i) {
+    t += 0.5 * (vx[i] * vx[i] + vy[i] * vy[i] + vz[i] * vz[i]);
   }
-  WriteConf.close();
-  return;
-}
+  // Potential energy per particle
+  stima_pot = static_cast<double>(v / npart);
+  // Kinetic energy per particle
+  stima_kin = static_cast<double>(t / npart);
+  // Temperature
+  stima_temp = static_cast<double>((2.0 / 3.0) * t / npart);
+  // Total energy per particle
+  stima_etot = static_cast<double>((t + v) / npart);
+  stima_press = 16. * stima_press / (vol);
+  stima_press += stima_temp * rho;
 
-void ConfXYZ(int nconf){ //Write configuration in .xyz format
-  ofstream WriteXYZ;
+  ofstream potential_energy(Epot);
+  ofstream kinetic_energy(Ekin);
+  ofstream temperature(Temp);
+  ofstream total_energy(Etot);
+  ofstream pressure(Press);
 
-  WriteXYZ.open("frames/config_" + to_string(nconf) + ".xyz");
-  WriteXYZ << npart << endl;
-  WriteXYZ << "This is only a comment!" << endl;
-  for (int i=0; i<npart; ++i){
-    WriteXYZ << "LJ  " << Pbc(x[i]) << "   " <<  Pbc(y[i]) << "   " << Pbc(z[i]) << endl;
+  if (potential_energy.is_open() && kinetic_energy.is_open() &&
+      temperature.is_open() && total_energy.is_open() && pressure.is_open()) {
+    potential_energy << stima_pot << endl;
+    kinetic_energy << stima_kin << endl;
+    temperature << stima_temp << endl;
+    total_energy << stima_etot << endl;
+    pressure << stima_press << endl;
+  } else {
+    cerr << "ERROR: unable to open " << Epot << ", " << Ekin << ", " << Temp
+         << ", " << Etot << ", " << Press << " files." << endl;
+    exit(1);
   }
-  WriteXYZ.close();
+
+  imeasure++;
+  iblock = imeasure / block_size;
+  est_pot[iblock] += stima_pot;
+  est_kin[iblock] += stima_kin;
+  est_temp[iblock] += stima_temp;
+  est_etot[iblock] += stima_etot;
+  est_press[iblock] += stima_press;
 }
 
-double Pbc(double r){  //Algorithm for periodic boundary conditions with side L=box
-    return r - box * rint(r/box);
+void MolDyn_NVE::BlockingResults() {
+  for (auto &elem : est_pot) {
+    elem /= block_size;
+  }
+  for (auto &elem : est_kin) {
+    elem /= block_size;
+  }
+  for (auto &elem : est_temp) {
+    elem /= block_size;
+  }
+  for (auto &elem : est_etot) {
+    elem /= block_size;
+  }
+  for (auto &elem : est_press) {
+    elem /= block_size;
+  }
+
+  vector<double> pot_err = blocking_error(est_pot);
+  vector<double> kin_err = blocking_error(est_kin);
+  vector<double> temp_err = blocking_error(est_temp);
+  vector<double> etot_err = blocking_error(est_etot);
+  vector<double> press_err = blocking_error(est_press);
+
+  ofstream out("results/ave_epot.dat");
+  if (out.is_open()) {
+    for (int i{}; i < est_pot.size(); ++i)
+      out << i << " " << est_pot[i] << " " << pot_err[i] << endl;
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
+  out.close();
+
+  out.open("results/ave_ekin.dat");
+  if (out.is_open()) {
+    for (int i{}; i < est_kin.size(); ++i)
+      out << i << " " << est_kin[i] << " " << kin_err[i] << endl;
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
+  out.close();
+
+  out.open("results/ave_etot.dat");
+  if (out.is_open()) {
+    for (int i{}; i < est_etot.size(); ++i)
+      out << i << " " << est_etot[i] << " " << etot_err[i] << endl;
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
+  out.close();
+
+  out.open("results/ave_temp.dat");
+  if (out.is_open()) {
+    for (int i{}; i < est_temp.size(); ++i)
+      out << i << " " << est_temp[i] << " " << temp_err[i] << endl;
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
+  out.close();
+
+  out.open("results/ave_press.dat");
+  if (out.is_open()) {
+    for (int i{}; i < est_press.size(); ++i)
+      out << i << " " << est_press[i] << " " << press_err[i] << endl;
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
+
+  out.close();
 }
-/****************************************************************
-*****************************************************************
-    _/    _/  _/_/_/  _/       Numerical Simulation Laboratory
-   _/_/  _/ _/       _/       Physics Department
-  _/  _/_/    _/    _/       Universita' degli Studi di Milano
- _/    _/       _/ _/       Prof. D.E. Galli
-_/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
-*****************************************************************
-*****************************************************************/
+
+void MolDyn_NVE::RunSimulation() {
+  unsigned int nconf = 1;              // starting from configuration number 1
+  ofstream out("frames/config_1.xyz"); // check if frames folder exists
+  if (out.fail()) {
+    cout << "\n\nERROR: Unable to write on folder 'frames', create it"
+            "and run again!\n\n";
+    exit(2);
+  }
+  out.close();
+  // modified in order to print one xyz file less: the corresponding
+  // configuration will be printed in the last lines to "old.0" and
+  // "config.final".
+  for (int istep{}; istep < nstep; ++istep) {
+    Move();
+    if (istep % iprint == 0)
+      cout << "Number of time-steps: " << istep << endl;
+    if (istep % measure_time_interval == 0) {
+      Measure();
+      ConfXYZ(nconf);
+      nconf++;
+    }
+  }
+  cout << "Number of time-steps: " << nstep << endl << endl;
+  ConfFinal("old.0");
+  Move();
+  Measure();
+  ConfFinal("config.final");
+  BlockingResults();
+}
+
+inline double MolDyn_NVE::Pbc(double r) const {
+  return r - box * rint(r / box);
+}

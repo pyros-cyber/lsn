@@ -1,48 +1,86 @@
-/****************************************************************
-*****************************************************************
-    _/    _/  _/_/_/  _/       Numerical Simulation Laboratory
-   _/_/  _/ _/       _/       Physics Department
-  _/  _/_/    _/    _/       Universita' degli Studi di Milano
- _/    _/       _/ _/       Prof. D.E. Galli
-_/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
-*****************************************************************
-*****************************************************************/
-//parameters, observables
-const int m_props=4;
-int n_props;
-int iv,ik,it,ie;
-double stima_pot, stima_kin, stima_etot, stima_temp;
+#ifndef MOLDYN_NVE_H
+#define MOLDYN_NVE_H
 
-// averages
-double acc,att;
+#include "myStatFunc.h"
+#include "random.h"
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <stdlib.h>
+#include <string>
+#include <vector>
 
-//configuration
-const int m_part=108;
-double x[m_part],y[m_part],z[m_part],xold[m_part],yold[m_part],zold[m_part];
-double vx[m_part],vy[m_part],vz[m_part];
+using namespace std;
 
-// thermodynamical state
-int npart;
-double energy,temp,vol,rho,box,rcut;
+struct MolDyn_NVE {
+private:
+  // thermodynamical state
+  // # of particles in the Simulation
+  unsigned int npart;
+  // physical parameters
+  double energy, temp, vol, rho, box, rcut;
 
-// simulation
-int nstep, iprint, seed;
-double delta;
+  // simulation parameters:
+  unsigned int nstep, iprint;
+  double delta;
 
-//functions
-void Input(void);
-void Move(void);
-void ConfFinal(void);
-void ConfXYZ(int);
-void Measure(void);
-double Force(int, int);
-double Pbc(double);
-/****************************************************************
-*****************************************************************
-    _/    _/  _/_/_/  _/       Numerical Simulation Laboratory
-   _/_/  _/ _/       _/       Physics Department
-  _/  _/_/    _/    _/       Universita' degli Studi di Milano
- _/    _/       _/ _/       Prof. D.E. Galli
-_/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
-*****************************************************************
-*****************************************************************/
+  Random rand;
+
+  // time interval that separates each measurement:
+  // compute block size (for the blocking averages) and setting block index
+  // (L = M/N of the previous exercises, M is nstep/measure_time_interval, N is
+  // nblocks, L is block_size)
+  unsigned int measure_time_interval, n_blocks, block_size, imeasure, iblock;
+
+  // strings where to save output streams
+  string Epot, Ekin, Etot, Temp, Press;
+
+  // configuration:
+  // positions, old positions, velocities, forces acting on each particle
+  vector<double> x, y, z, xold, yold, zold, vx, vy, vz, fx, fy, fz;
+  // observable properties:
+  double stima_pot, stima_kin, stima_etot, stima_temp, stima_press;
+  // vectors to get the blocking average:
+  vector<double> est_pot, est_kin, est_etot, est_temp, est_press;
+
+  // functions: I declare them as private because I will only call them
+  // from methods inside the class itself
+  void Input(string);
+  // computes the forces on the particles (from the potential):
+  void Force();
+  // computes Periodic Boundary Conditions for box of length L=box
+  double Pbc(double) const;
+  // Moves the particles with Verlet algorithm
+  void Move();
+  // writes the final configuration
+  void ConfFinal(string) const;
+  // writes the configuration in .xyz format
+  void ConfXYZ(int) const;
+  // print values of properties to file
+  void Measure();
+  // computes and prints averages and statistical uncertaintes with blocking
+  // method
+  void BlockingResults();
+
+public:
+  /**
+   * @brief Construct a new MolDyn_NVE object without old position
+   * - first string is the filename with input parameters
+   * - second string is the filename with initial molecular configuration
+   */
+  MolDyn_NVE(string, string);
+  /**
+   * @brief Construct a new MolDyn_NVE object with old position
+   * - first and second string are as above
+   * - the third string is the filename with old molecular configuration, used
+   * to estrapolate the velocities
+   */
+  MolDyn_NVE(string, string, string);
+  /**
+   * @brief Runs a simulation using the Verlet algorithm
+   *
+   */
+  void RunSimulation();
+};
+
+#endif
