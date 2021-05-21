@@ -26,6 +26,7 @@ add_library(myLibrary
     src/random.cpp
     src/myStatFunc.cpp
     src/randomWalk.cpp
+    src/MolDyn_NVE.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
