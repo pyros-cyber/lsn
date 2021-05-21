@@ -7,12 +7,16 @@ int interface(int argc, char *argv[]) {
   args::ArgumentParser parser(
       "This program performs a molecular dynamics simulation in NVE ensemble");
   args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-  args::ValueFlag<string> restart(
-      parser, "", "Start from configuration in old.0 and config.0",
-      {'r', "restart"});
-  args::ValueFlag<string> equilibrium(
-      parser, "", "Start from configuration in config.0", {'e', "equilibrium"});
-  args::ValueFlag<string> input(parser, "", "The input file", {'i', "input"});
+
+  args::Group commands(parser, "commands");
+  args::Command restart(commands, "restart",
+                        "Start from configuration in old.0 and config.final");
+  args::Command equilibrium(commands, "equilibrium",
+                            "Start from configuration in config.0");
+  args::Group arguments(parser, "arguments", args::Group::Validators::DontCare,
+                        args::Options::Global);
+  args::ValueFlag<string> input(arguments, "", "The input file",
+                                {'i', "input"});
 
   try {
     parser.ParseCLI(argc, argv);
@@ -27,6 +31,16 @@ int interface(int argc, char *argv[]) {
     cerr << e.what() << std::endl;
     cerr << parser;
     return 1;
+  }
+  if (restart) {
+    MolDyn_NVE molecularDynamic(args::get(input),
+                                "../md-configurations/config.final", "old.0");
+    molecularDynamic.RunSimulation();
+  }
+  if (equilibrium) {
+    MolDyn_NVE molecularDynamic(args::get(input),
+                                "../md-configurations/config.0");
+    molecularDynamic.RunSimulation();
   }
   return 0;
 }
