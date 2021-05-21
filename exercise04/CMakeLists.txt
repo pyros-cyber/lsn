@@ -25,7 +25,6 @@ add_executable(ex04.1
 add_library(myLibrary
     src/random.cpp
     src/myStatFunc.cpp
-    src/randomWalk.cpp
     src/MolDyn_NVE.cpp
 )
 
