@@ -77,9 +77,11 @@ do
     else
       ./moleculardynamics  restart -i input.$state
     fi
-    cp -r results results$irnd
+    mv results results$irnd
+    mkdir results
   done
   cd ..
   cd ..
 done
+cd ..
 echo -e "Finished execution."
