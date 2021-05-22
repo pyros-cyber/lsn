@@ -468,7 +468,7 @@ void MolDyn_NVE::RunSimulation() {
   for (int istep{}; istep < nstep; ++istep) {
     Move();
     if (istep % iprint == 0) {
-      cout << "Number of time-steps: " << istep << endl;
+      // cout << "Number of time-steps: " << istep << endl;
     }
     if (istep % measure_time_interval == 0) {
       Measure();
