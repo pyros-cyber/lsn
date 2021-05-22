@@ -17,8 +17,8 @@ project(ex04
 #enable_testing()
 
 # Our "project" will be able to build an executable out of a C++ source file
-add_executable(ex04.1
-    src/ex04.1.cpp
+add_executable(moleculardynamics
+    src/moleculardynamics.cpp
 )
 
 # Our project will be able to build a library
@@ -36,9 +36,9 @@ target_include_directories(myLibrary PUBLIC
 
 # Target commands tells which dependencies targer exec have
 target_link_libraries(
-    ex04.1 PUBLIC 
+    moleculardynamics PUBLIC 
     myLibrary
 )
 
 # Force the compiler to use the C++17 standard
-target_compile_features(ex04.1 PUBLIC cxx_std_17)
+target_compile_features(moleculardynamics PUBLIC cxx_std_17)
