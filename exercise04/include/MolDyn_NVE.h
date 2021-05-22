@@ -32,8 +32,8 @@ private:
   // nblocks, L is block_size)
   unsigned int measure_time_interval, n_blocks, block_size, imeasure, iblock;
 
-  // strings where to save output streams
-  string Epot, Ekin, Etot, Temp, Press;
+  // output streams
+  ofstream Epot, Ekin, Etot, Temp, Press;
 
   // configuration:
   // positions, old positions, velocities, forces acting on each particle
@@ -80,6 +80,7 @@ public:
    * @brief Runs a simulation using the Verlet algorithm
    *
    */
+  ~MolDyn_NVE();
   void RunSimulation();
 };
 

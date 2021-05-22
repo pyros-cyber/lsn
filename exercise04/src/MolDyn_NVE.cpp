@@ -1,11 +1,11 @@
 #include "MolDyn_NVE.h"
 
 void MolDyn_NVE::Input(string simParameters) {
-  Epot = "results/epot.dat";
-  Ekin = "results/ekin.dat";
-  Temp = "results/temp.dat";
-  Etot = "results/etot.dat";
-  Press = "results/press.dat";
+  Epot.open("results/epot.dat");
+  Ekin.open("results/ekin.dat");
+  Temp.open("results/temp.dat");
+  Etot.open("results/etot.dat");
+  Press.open("results/press.dat");
 
   ifstream ReadInput(simParameters);
   if (ReadInput.fail()) {
@@ -84,7 +84,7 @@ void MolDyn_NVE::Input(string simParameters) {
 }
 
 MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile)
-    : rand{"../Primes", "../seed.in"} {
+    : rand{"Primes", "seed.in"} {
 
   Input(simParameters);
 
@@ -148,7 +148,7 @@ MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile)
 
 MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile,
                        string oldConfigFile)
-    : rand{"../Primes", "../seed.in"} {
+    : rand{"Primes", "seed.in"} {
 
   Input(simParameters);
 
@@ -160,9 +160,9 @@ MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile,
   if (ReadConf.is_open()) {
     for (int i{}; i < npart; ++i) {
       ReadConf >> x[i] >> y[i] >> z[i];
-      x[i] = x[i] * box;
-      y[i] = y[i] * box;
-      z[i] = z[i] * box;
+      x[i] *= box;
+      y[i] *= box;
+      z[i] *= box;
     }
   } else {
     cerr << "ERROR: can't read configuration from: " << configFile
@@ -178,9 +178,9 @@ MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile,
   if (ReadConf.is_open()) {
     for (int i{}; i < npart; ++i) {
       ReadConf >> xold[i] >> yold[i] >> zold[i];
-      xold[i] = xold[i] * box;
-      yold[i] = yold[i] * box;
-      zold[i] = zold[i] * box;
+      xold[i] *= box;
+      yold[i] *= box;
+      zold[i] *= box;
     }
   } else {
     cerr << "ERROR: can't read configuration from: " << oldConfigFile
@@ -224,7 +224,13 @@ MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile,
     z[i] = zi;
   }
 }
-
+MolDyn_NVE::~MolDyn_NVE() {
+  Epot.close();
+  Ekin.close();
+  Temp.close();
+  Etot.close();
+  Press.close();
+}
 void MolDyn_NVE::ConfXYZ(int nconf) const {
   ofstream WriteXYZ("frames/config_" + to_string(nconf) + ".xyz");
 
@@ -351,22 +357,15 @@ void MolDyn_NVE::Measure() {
   stima_press = 16. * stima_press / (vol);
   stima_press += stima_temp * rho;
 
-  ofstream potential_energy(Epot);
-  ofstream kinetic_energy(Ekin);
-  ofstream temperature(Temp);
-  ofstream total_energy(Etot);
-  ofstream pressure(Press);
-
-  if (potential_energy.is_open() && kinetic_energy.is_open() &&
-      temperature.is_open() && total_energy.is_open() && pressure.is_open()) {
-    potential_energy << stima_pot << endl;
-    kinetic_energy << stima_kin << endl;
-    temperature << stima_temp << endl;
-    total_energy << stima_etot << endl;
-    pressure << stima_press << endl;
+  if (Epot.is_open() && Ekin.is_open() && Temp.is_open() && Etot.is_open() &&
+      Press.is_open()) {
+    Epot << stima_pot << endl;
+    Ekin << stima_kin << endl;
+    Temp << stima_temp << endl;
+    Etot << stima_etot << endl;
+    Press << stima_press << endl;
   } else {
-    cerr << "ERROR: unable to open " << Epot << ", " << Ekin << ", " << Temp
-         << ", " << Etot << ", " << Press << " files." << endl;
+    cerr << "ERROR: unable to open output files." << endl;
     exit(1);
   }
 
@@ -468,8 +467,9 @@ void MolDyn_NVE::RunSimulation() {
   // "config.final".
   for (int istep{}; istep < nstep; ++istep) {
     Move();
-    if (istep % iprint == 0)
+    if (istep % iprint == 0) {
       cout << "Number of time-steps: " << istep << endl;
+    }
     if (istep % measure_time_interval == 0) {
       Measure();
       ConfXYZ(nconf);
