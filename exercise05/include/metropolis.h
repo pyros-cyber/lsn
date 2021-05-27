@@ -65,8 +65,8 @@ struct Metropolis {
    *
    * @return double
    */
-  inline double acceptance() const {
-    return static_cast<double>(accepted / total);
+  inline float acceptance() const {
+    return static_cast<float>(accepted) / total;
   }
 };
 
