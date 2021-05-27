@@ -68,7 +68,7 @@ inline double ground_state(double u, double v, double w) {
  * @return double
  */
 inline double first_excited_state(double u, double v, double w) {
-  double r = u * u + v * v + w * w;
-  return exp(-sqrt(r)) * r * r / (32. * M_PI);
+  double r_sq = u * u + v * v + w * w;
+  return exp(-sqrt(r_sq)) * r_sq / (32. * M_PI);
 }
 #endif
