@@ -17,6 +17,8 @@ int main(int argc, char *argv[]) {
                        "Start the simulation in the origin");
   args::Command far(commands, "far",
                     "Start the simulation far from the origin");
+  args::Command pos(commands, "pos",
+                    "Start the simulation, but prints the positions sampled");
   args::Group arguments(parser, "arguments", args::Group::Validators::DontCare,
                         args::Options::Global);
   args::ValueFlag<string> state(
@@ -51,72 +53,63 @@ int main(int argc, char *argv[]) {
     HydrogenAtom hydro(0, 0, 0, args::get(state));
     Metropolis metro(args::get(step), hydro.x, hydro.y, hydro.z);
     vector<double> r(N, 0.);
-    ofstream out_position("positions." + args::get(transition) + "." +
-                          hydro.state + ".dat");
-    if (out_position.is_open()) {
+    for (int i{}; i < r.size(); ++i) {
+      for (int j{}; j < throws_per_block; ++j) {
+        if (args::get(transition) == "uniform" && hydro.state == "ground") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.uniform_step(coordinate);
+              },
+              ground_state);
+        } else if (args::get(transition) == "uniform" &&
+                   hydro.state == "first-excited") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.uniform_step(coordinate);
+              },
+              first_excited_state);
+        } else if (args::get(transition) == "gaussian" &&
+                   hydro.state == "ground") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.gaussian_step(coordinate);
+              },
+              ground_state);
+        } else if (args::get(transition) == "gaussian" &&
+                   hydro.state == "first-excited") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.gaussian_step(coordinate);
+              },
+              first_excited_state);
+        } else {
+          cerr << "Unknown transition probability or hydrogen "
+                  "state.\nExiting.\n";
+          return 1;
+        }
+
+        r[i] +=
+            sqrt(metro.x_start * metro.x_start + metro.y_start * metro.y_start +
+                 metro.z_start * metro.z_start);
+      }
+      r[i] /= throws_per_block;
+    }
+
+    cout << "Metropolis algorithm acceptance: " << metro.acceptance() << endl;
+
+    vector<double> radius_error = blocking_error(r);
+
+    ofstream out("results." + args::get(transition) + "." + hydro.state +
+                 ".origin.dat");
+    if (out.is_open()) {
       for (int i{}; i < r.size(); ++i) {
-        for (int j{}; j < throws_per_block; ++j) {
-          out_position << metro.x_start << " " << metro.y_start << " "
-                       << metro.z_start << endl;
-          if (args::get(transition) == "uniform" && hydro.state == "ground") {
-            metro.Run(
-                [&metro](double coordinate) {
-                  return metro.uniform_step(coordinate);
-                },
-                ground_state);
-          } else if (args::get(transition) == "uniform" &&
-                     hydro.state == "first-excited") {
-            metro.Run(
-                [&metro](double coordinate) {
-                  return metro.uniform_step(coordinate);
-                },
-                first_excited_state);
-          } else if (args::get(transition) == "gaussian" &&
-                     hydro.state == "ground") {
-            metro.Run(
-                [&metro](double coordinate) {
-                  return metro.gaussian_step(coordinate);
-                },
-                ground_state);
-          } else if (args::get(transition) == "gaussian" &&
-                     hydro.state == "first-excited") {
-            metro.Run(
-                [&metro](double coordinate) {
-                  return metro.gaussian_step(coordinate);
-                },
-                first_excited_state);
-          } else {
-            cerr << "Unknown transition probability or hydrogen "
-                    "state.\nExiting.\n";
-            return 1;
-          }
-
-          r[i] += sqrt(metro.x_start * metro.x_start +
-                       metro.y_start * metro.y_start +
-                       metro.z_start * metro.z_start);
-        }
-        r[i] /= throws_per_block;
+        out << r[i] << " " << radius_error[i] << endl;
       }
-
-      cout << "Metropolis algorithm acceptance: " << metro.acceptance() << endl;
-
-      vector<double> radius_error = blocking_error(r);
-
-      ofstream out("results." + args::get(transition) + "." + hydro.state +
-                   ".origin.dat");
-      if (out.is_open()) {
-        for (int i{}; i < r.size(); ++i) {
-          out << r[i] << " " << radius_error[i] << endl;
-        }
-      } else {
-        cerr << "ERROR: unable to open output file" << endl;
-        return 1;
-      }
-      out.close();
     } else {
       cerr << "ERROR: unable to open output file" << endl;
       return 1;
     }
+    out.close();
   }
   if (far) {
     M = 10000;
@@ -175,5 +168,54 @@ int main(int argc, char *argv[]) {
     out.close();
   }
 
+  if (pos) {
+    N = 1e5;
+    HydrogenAtom hydro(0, 0, 0, args::get(state));
+    Metropolis metro(args::get(step), hydro.x, hydro.y, hydro.z);
+    ofstream out("positions." + args::get(transition) + "." + hydro.state +
+                 ".dat");
+    if (out.is_open()) {
+      for (int i{}; i < N; ++i) {
+        out << metro.x_start << " " << metro.y_start << " " << metro.z_start
+            << endl;
+        if (args::get(transition) == "uniform" && hydro.state == "ground") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.uniform_step(coordinate);
+              },
+              ground_state);
+        } else if (args::get(transition) == "uniform" &&
+                   hydro.state == "first-excited") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.uniform_step(coordinate);
+              },
+              first_excited_state);
+        } else if (args::get(transition) == "gaussian" &&
+                   hydro.state == "ground") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.gaussian_step(coordinate);
+              },
+              ground_state);
+        } else if (args::get(transition) == "gaussian" &&
+                   hydro.state == "first-excited") {
+          metro.Run(
+              [&metro](double coordinate) {
+                return metro.gaussian_step(coordinate);
+              },
+              first_excited_state);
+        } else {
+          cerr << "Unknown transition probability or hydrogen "
+                  "state.\nExiting.\n";
+          return 1;
+        }
+      }
+    } else {
+      cerr << "ERROR: unable to open output file" << endl;
+      return 1;
+    }
+    out.close();
+  }
   return 0;
 }
