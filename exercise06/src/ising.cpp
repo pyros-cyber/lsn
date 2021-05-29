@@ -255,20 +255,19 @@ void Ising1D::ConfFinal() {
   rnd.SaveSeed();
 }
 
-/*
 void Ising1D::MetropolisMove() {
   int flip;
   double en, r;
 
-  for (unsigned int i = 0; i < n_spin; ++i) {
+  for (int i{}; i < n_spin; ++i) {
     // Select randomly a particle (for C++ syntax, 0 <= flip <= n_spin-1)
-    flip = (int)(rnd.Rannyu() * n_spin);
-    en = -2 * Boltzmann(s[flip], flip);
-    en = std::exp(-beta * en);
-    double A = std::min(1., en);
+    flip = static_cast<int>(rnd.Rannyu() * n_spin);
+    en = -2 * Boltzmann(spin_conf[flip], flip);
+    en = exp(-beta * en);
+    double alpha = min(1., en);
     r = rnd.Rannyu();
-    if (r < A) {
-      s[flip] = -s[flip];
+    if (r < alpha) {
+      spin_conf[flip] = -spin_conf[flip];
       accepted++;
     }
     attempted++;
@@ -277,24 +276,26 @@ void Ising1D::MetropolisMove() {
 
 void Ising1D::GibbsMove() {
   int flip;
-  double p, en1, en2, Q, r;
-  for (unsigned int i = 0; i < n_spin; ++i) {
+  double p, en, en_up, en_down, Q, r;
+  for (int i{}; i < n_spin; ++i) {
     // Select randomly a particle (for C++ syntax, 0 <= o <= n_spin-1)
-    flip = (int)(rnd.Rannyu() * n_spin);
-    en1 = Boltzmann(1, flip);
-    en2 = Boltzmann(-1, flip);
-    Q = std::exp(-beta * en1) + std::exp(-beta * en2);
-    p = std::exp(-beta * en1) / Q;
+    flip = static_cast<int>(rnd.Rannyu() * n_spin);
+    en = Boltzmann(spin_conf[flip], flip);
+    en_up = Boltzmann(1, flip);
+    en_down = Boltzmann(-1, flip);
+    Q = exp(-beta * en_up) + exp(-beta * en_down);
+    p = exp(-beta * en) / Q;
     r = rnd.Rannyu();
-    if (p > r)
-      s[flip] = 1.;
-    else
-      s[flip] = -1.;
+    if (p > r) {
+      spin_conf[flip] = 1.;
+    } else {
+      spin_conf[flip] = -1.;
+    }
     accepted++;
     attempted++;
   }
 }
-
+/*
 void Ising1D::Run(bool instant) {
   Input();                                 // Inizialization
   for (int iblk = 1; iblk <= nblk; ++iblk) // Simulation

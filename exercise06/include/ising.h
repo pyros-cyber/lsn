@@ -53,9 +53,10 @@ private:
   // either Gibbs or Metropolis!
   /*
   void (Ising1D::*Move)();
+  */
   void MetropolisMove();
   void GibbsMove();
-  */
+
   // inline methods
   inline double Boltzmann(int sm, int ip) const {
     double ene =
@@ -64,10 +65,11 @@ private:
   }
   // Algorithm for periodic boundary conditions
   inline int Pbc(int i) const {
-    if (i >= n_spin)
+    if (i >= n_spin) {
       i -= n_spin;
-    else if (i < 0)
+    } else if (i < 0) {
       i += n_spin;
+    }
     return i;
   }
   inline double Error(double sum, double sum2, int iblk) const {

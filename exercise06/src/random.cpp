@@ -132,7 +132,7 @@ void Random::Solid_Angle(double &theta, double &phi) {
     phi = acos(x / (sqrt(r_sq) * sin(theta)));
   }
 }
-double Random::Accept_Reject(std::function<double(double)> f, double max) {
+double Random::Accept_Reject(function<double(double)> f, double max) {
   double x = 0., r = 0.;
   do {
     x = this->Rannyu();
