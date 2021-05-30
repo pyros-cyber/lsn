@@ -25,7 +25,7 @@ add_executable(isingmodel
 add_library(myLibrary
     src/random.cpp
     src/myStatFunc.cpp
-    src/metropolis.cpp
+    src/ising.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
@@ -36,9 +36,9 @@ target_include_directories(myLibrary PUBLIC
 
 # Target commands tells which dependencies targer exec have
 target_link_libraries(
-    h-atom PUBLIC 
+    isingmodel PUBLIC 
     myLibrary
 )
 
 # Force the compiler to use the C++17 standard
-target_compile_features(h-atom PUBLIC cxx_std_17)
+target_compile_features(isingmodel PUBLIC cxx_std_17)
