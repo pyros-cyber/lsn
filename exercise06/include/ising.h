@@ -4,10 +4,9 @@
 #include "random.h"
 #include <cmath>
 #include <fstream>
-#include <iomanip>
+#include <functional>
 #include <iostream>
 #include <map>
-#include <ostream>
 #include <vector>
 
 using namespace std;
@@ -85,7 +84,7 @@ public:
   Ising1D(string old_configuration = "");
 
   // run the simulation (default is NOT to print instant values)
-  void Run(bool instant = false);
+  void Run(function<void()>, bool instant = false);
 };
 
 #endif

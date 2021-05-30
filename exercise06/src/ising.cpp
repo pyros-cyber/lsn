@@ -10,15 +10,6 @@ Ising1D::Ising1D(string old_configuration) : rnd{"../Primes", "../seed.in"} {
   }
 
   Input();
-  /*
-    if(metro) {
-      Move = &Ising1D::MetropolisMove;
-      std::cout << "Metropolis sampling " << std::endl;
-    } else {
-      Move = &Ising1D::GibbsMove;
-      std::cout << "Gibbs sampling " << std::endl;
-    }
-  */
   if (old_configuration == "") { // start from random config
     // initial configuration
     spin_conf.resize(n_spin);
@@ -54,7 +45,7 @@ Ising1D::Ising1D(string old_configuration) : rnd{"../Primes", "../seed.in"} {
   Measure();
 
   // Print initial values for the potential energy and virial
-  cout << "Initial energy = " << walker["energy"] / n_spin << endl;
+  cout << "Initial energy = " << walker.at("energy") / n_spin << endl;
 }
 
 void Ising1D::Input() {
@@ -245,7 +236,7 @@ void Ising1D::ConfFinal() {
   if (WriteConf.is_open()) {
     cout << "Print final configuration to file config.final " << endl << endl;
     for (auto &el : spin_conf) {
-      WriteConf << el << std::endl;
+      WriteConf << el << endl;
     }
   } else {
     cerr << "ERROR: unable to open output files.\nExiting.\n";
@@ -257,16 +248,10 @@ void Ising1D::ConfFinal() {
 
 void Ising1D::MetropolisMove() {
   int flip;
-  double en, r;
-
   for (int i{}; i < n_spin; ++i) {
-    // Select randomly a particle (for C++ syntax, 0 <= flip <= n_spin-1)
     flip = static_cast<int>(rnd.Rannyu() * n_spin);
-    en = -2 * Boltzmann(spin_conf[flip], flip);
-    en = exp(-beta * en);
-    double alpha = min(1., en);
-    r = rnd.Rannyu();
-    if (r < alpha) {
+    double alpha = min(1., exp(2. * beta * Boltzmann(spin_conf[flip], flip)));
+    if (rnd.Rannyu() < alpha) {
       spin_conf[flip] = -spin_conf[flip];
       accepted++;
     }
@@ -276,17 +261,11 @@ void Ising1D::MetropolisMove() {
 
 void Ising1D::GibbsMove() {
   int flip;
-  double p, en, en_up, en_down, Q, r;
+  double p;
   for (int i{}; i < n_spin; ++i) {
-    // Select randomly a particle (for C++ syntax, 0 <= o <= n_spin-1)
     flip = static_cast<int>(rnd.Rannyu() * n_spin);
-    en = Boltzmann(spin_conf[flip], flip);
-    en_up = Boltzmann(1, flip);
-    en_down = Boltzmann(-1, flip);
-    Q = exp(-beta * en_up) + exp(-beta * en_down);
-    p = exp(-beta * en) / Q;
-    r = rnd.Rannyu();
-    if (p > r) {
+    p = 1. / (1. + exp(-2. * beta * Boltzmann(spin_conf[flip], flip)));
+    if (p >= rnd.Rannyu()) {
       spin_conf[flip] = 1.;
     } else {
       spin_conf[flip] = -1.;
@@ -295,21 +274,20 @@ void Ising1D::GibbsMove() {
     attempted++;
   }
 }
-/*
-void Ising1D::Run(bool instant) {
-  Input();                                 // Inizialization
-  for (int iblk = 1; iblk <= nblk; ++iblk) // Simulation
-  {
-    Reset(iblk); // Reset block averages
-    for (int istep = 1; istep <= nstep; ++istep) {
-      (*this.*Move)();
-      if (instant)
+
+void Ising1D::Run(function<void()> Move, bool instant) {
+  for (int iblk{1}; iblk <= nblk; ++iblk) {
+    Reset(iblk);
+    for (int istep{1}; istep <= nstep; ++istep) {
+      Move();
+      if (instant) {
         Measure(istep);
-      else
+      } else {
         Measure();
-      Accumulate(); // Update block averages
+      }
+      Accumulate();
     }
-    BlockAverages(iblk); // Print results for current block
+    BlockAverages(iblk);
   }
-  ConfFinal(); // Write final configuration
-}*/
+  ConfFinal();
+}
