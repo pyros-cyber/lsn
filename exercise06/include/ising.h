@@ -37,7 +37,7 @@ private:
   // thermodynamical state
   double beta, temp, J, h;
   // simulation
-  int nstep, nblk, metro;
+  int nstep, nblk;
   // output files
   //  std::ofstream Ene, Heat, Mag, Chi;
 
@@ -47,14 +47,6 @@ private:
   void BlockAverages(int);
   void ConfFinal();
   void Measure(int step = 0);
-
-  // pointer to be set to the correct sampling method,
-  // either Gibbs or Metropolis!
-  /*
-  void (Ising1D::*Move)();
-  */
-  void MetropolisMove();
-  void GibbsMove();
 
   // inline methods
   inline double Boltzmann(int sm, int ip) const {
@@ -83,6 +75,8 @@ public:
   // parameters are specified.
   Ising1D(string old_configuration = "");
 
+  void MetropolisMove();
+  void GibbsMove();
   // run the simulation (default is NOT to print instant values)
   void Run(function<void()>, bool instant = false);
 };

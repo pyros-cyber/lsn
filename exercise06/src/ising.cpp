@@ -1,6 +1,6 @@
 #include "ising.h"
 
-Ising1D::Ising1D(string old_configuration) : rnd{"../Primes", "../seed.in"} {
+Ising1D::Ising1D(string old_configuration) : rnd{"Primes", "seed.in"} {
   props = {"energy", "capacity", "magnetization", "susceptibility"};
   for (auto &elem : props) {
     walker[elem] = 0.;
@@ -63,11 +63,11 @@ void Ising1D::Input() {
 
   // Read seed for random numbers
   int p1, p2;
-  ifstream Primes("../Primes");
+  ifstream Primes("Primes");
   Primes >> p1 >> p2;
   Primes.close();
 
-  ifstream input("../seed.in");
+  ifstream input("seed.in");
   input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
   rnd.SetRandom(seed, p1, p2);
   input.close();
@@ -88,7 +88,6 @@ void Ising1D::Input() {
   ReadInput >> h;
   cout << "External field = " << h << endl << endl;
 
-  ReadInput >> metro; // if=1 Metropolis else Gibbs
   ReadInput >> nblk;
   ReadInput >> nstep;
 
@@ -116,10 +115,10 @@ void Ising1D::Measure(int step) {
     //    std::cout << "Acceptance rate " << accepted/attempted << std::endl <<
     //    std::endl;
     ofstream EneIn, CapIn, MagIn, SusIn;
-    EneIn.open("results/instant.ene.0");
-    CapIn.open("results/instant.cap.0");
-    MagIn.open("results/instant.mag.0");
-    SusIn.open("results/instant.sus.0");
+    EneIn.open("results/instant.ene.0", ios::app);
+    CapIn.open("results/instant.cap.0", ios::app);
+    MagIn.open("results/instant.mag.0", ios::app);
+    SusIn.open("results/instant.sus.0", ios::app);
 
     if (EneIn.is_open() && CapIn.is_open() && MagIn.is_open() &&
         SusIn.is_open()) {
@@ -171,14 +170,14 @@ void Ising1D::Accumulate() {
 void Ising1D::BlockAverages(int iblk) {
   // Print results for current block
   ofstream Ene, Heat, Mag, Chi;
-  Ene.open("results/ene.dat"); // delete content of file
-  Heat.open("results/heat.dat");
-  Mag.open("results/mag.dat");
-  Chi.open("results/chi.dat");
+  Ene.open("results/ene.dat", ios::app);
+  Heat.open("results/heat.dat", ios::app);
+  Mag.open("results/mag.dat", ios::app);
+  Chi.open("results/chi.dat", ios::app);
 
   if (Ene.is_open() && Heat.is_open() && Mag.is_open() && Chi.is_open()) {
-    cout << "Block number " << iblk << endl;
-    cout << "Acceptance rate " << accepted / attempted << endl << endl;
+    cout << "Block number = " << iblk << endl;
+    cout << "Acceptance rate = " << accepted / attempted << endl << endl;
 
     stima_u = (block_average.at("energy") / blk_norm) / n_spin;
     glob_average.at("energy") += stima_u;
@@ -261,10 +260,14 @@ void Ising1D::MetropolisMove() {
 
 void Ising1D::GibbsMove() {
   int flip;
-  double p;
+  double p, en_up, en_down, Q;
   for (int i{}; i < n_spin; ++i) {
     flip = static_cast<int>(rnd.Rannyu() * n_spin);
-    p = 1. / (1. + exp(-2. * beta * Boltzmann(spin_conf[flip], flip)));
+    en_up = Boltzmann(1, flip);
+    en_down = Boltzmann(-1, flip);
+    Q = exp(-beta * en_up) + exp(-beta * en_down);
+    p = exp(-beta * en_up) / Q;
+    // p = 1. / (1. + exp(-2. * beta * Boltzmann(spin_conf[flip], flip)));
     if (p >= rnd.Rannyu()) {
       spin_conf[flip] = 1.;
     } else {
