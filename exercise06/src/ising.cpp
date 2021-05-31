@@ -61,17 +61,6 @@ void Ising1D::Input() {
   cout << "Boltzmann weight exp(- beta * H ), beta = 1/T " << endl << endl;
   cout << "The program uses k_B=1 and mu_B=1 units " << endl;
 
-  // Read seed for random numbers
-  int p1, p2;
-  ifstream Primes("Primes");
-  Primes >> p1 >> p2;
-  Primes.close();
-
-  ifstream input("seed.in");
-  input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
-  rnd.SetRandom(seed, p1, p2);
-  input.close();
-
   // Read input informations
   ReadInput.open("input.dat");
 
