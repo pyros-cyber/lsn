@@ -49,10 +49,10 @@ private:
   void Measure(int step = 0);
 
   // inline methods
-  inline double Boltzmann(int sm, int ip) const {
-    double ene =
-        -J * sm * (spin_conf[Pbc(ip - 1)] + spin_conf[Pbc(ip + 1)]) - h * sm;
-    return ene;
+  inline double EnergyGap(int i) {
+    return 2. * J * spin_conf[i] *
+               (spin_conf[Pbc(i - 1)] + spin_conf[Pbc(i + 1)]) +
+           2. * h * spin_conf[i];
   }
   // Algorithm for periodic boundary conditions
   inline int Pbc(int i) const {

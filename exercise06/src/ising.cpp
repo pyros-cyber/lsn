@@ -249,7 +249,7 @@ void Ising1D::MetropolisMove() {
   int flip;
   for (int i{}; i < n_spin; ++i) {
     flip = static_cast<int>(rnd.Rannyu() * n_spin);
-    double alpha = min(1., exp(2. * beta * Boltzmann(spin_conf[flip], flip)));
+    double alpha = min(1., exp(-beta * EnergyGap(flip)));
     if (rnd.Rannyu() < alpha) {
       spin_conf[flip] = -spin_conf[flip];
       accepted++;
@@ -260,14 +260,10 @@ void Ising1D::MetropolisMove() {
 
 void Ising1D::GibbsMove() {
   int flip;
-  double p, en_up, en_down, Q;
+  double p;
   for (int i{}; i < n_spin; ++i) {
     flip = static_cast<int>(rnd.Rannyu() * n_spin);
-    en_up = Boltzmann(1, flip);
-    en_down = Boltzmann(-1, flip);
-    Q = exp(-beta * en_up) + exp(-beta * en_down);
-    p = exp(-beta * en_up) / Q;
-    // p = 1. / (1. + exp(-2. * beta * Boltzmann(spin_conf[flip], flip)));
+    p = 1. / (1. + exp(-beta * (EnergyGap(flip) / spin_conf[flip])));
     if (p >= rnd.Rannyu()) {
       spin_conf[flip] = 1.;
     } else {
