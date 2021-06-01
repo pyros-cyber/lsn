@@ -15,10 +15,15 @@ add_executable(montecarlomd
     src/montecarlomd.cpp
 )
 
+add_executable(moleculardynamics
+    src/moleculardynamics.cpp
+)
 # Our project will be able to build a library
 add_library(myLibrary
     src/random.cpp
     src/mcmd.cpp
+    src/MolDyn_NVE.cpp
+    src/myStatFunc.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
@@ -33,5 +38,10 @@ target_link_libraries(
     myLibrary
 )
 
+target_link_libraries(
+    moleculardynamics PUBLIC 
+    myLibrary
+)
 # Force the compiler to use the C++17 standard
 target_compile_features(montecarlomd PUBLIC cxx_std_17)
+target_compile_features(moleculardynamics PUBLIC cxx_std_17)
