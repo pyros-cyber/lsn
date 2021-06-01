@@ -13,10 +13,10 @@ class mcmd {
 private:
   /* VARIABLES */
   Random rnd;
-  // State of matter
-  string state;
   // Coordinates of the molecules
   vector<double> x, y, z;
+  // r range in each histogram bin
+  vector<double> r_range;
   // Keys for the maps of the observables
   vector<string> props;
   // Maps for blocking method averages
@@ -31,8 +31,8 @@ private:
   vector<double> g_histo_glob_ave_sq;
 
   // simulation parameters
-  double blk_norm, accepted, attempted, box, temp, rho, rcut, delta, beta, vol,
-      vtail, ptail, bin_size;
+  double accepted, attempted, box, temp, rho, rcut, delta, beta, vol, vtail,
+      ptail;
   unsigned int npart, nblk, nstep;
   const unsigned int nbins;
   bool instantenous;
@@ -49,10 +49,11 @@ private:
   void Averages(unsigned int);
   // one MC step
   void Move();
-  void ConfFinal();
+  void ConfFinal() const;
   void ConfXYZ(unsigned int);
   void Measure(unsigned int istep = 0);
   double Boltzmann(double, double, double, unsigned int);
+  void getRadiusRange(vector<double> &);
 
   /* INLINE METHODS */
   inline double Pbc(double r) const { return r - box * rint(r / box); }

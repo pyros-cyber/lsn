@@ -2,7 +2,7 @@
 
 mcmd::mcmd(string simParameters, string initial_configuration,
            bool _instantenous)
-    : rnd{"../Primes", "../seed.in"}, nbins{100} {
+    : rnd{"Primes", "seed.in"}, nbins{100} {
   instantenous = _instantenous;
   props = {"energy", "pressure"};
   for (auto &el : props) {
@@ -16,7 +16,6 @@ mcmd::mcmd(string simParameters, string initial_configuration,
   g_histo_glob_ave.resize(nbins);
   g_histo_glob_ave_sq.resize(nbins);
 
-  blk_norm = 0;
   accepted = 0;
   attempted = 0;
 
@@ -72,7 +71,8 @@ mcmd::mcmd(string simParameters, string initial_configuration,
   cout << "Number of steps in one block = " << nstep << endl << endl;
   ReadInput.close();
 
-  bin_size = (box / 2.) / nbins;
+  r_range.resize(nbins + 1);
+  getRadiusRange(r_range);
 
   x.resize(npart);
   y.resize(npart);
@@ -128,6 +128,13 @@ mcmd::~mcmd() {
   }
 }
 
+void mcmd::getRadiusRange(vector<double> &vct) {
+  double bin_size = (box * 0.5) / nbins;
+  for (int i{}; i < vct.size(); ++i) {
+    vct[i] = static_cast<double>(i) * bin_size;
+  }
+}
+
 double mcmd::Boltzmann(double _x, double _y, double _z, unsigned int ip) {
   double ene = 0., dx = 0., dy = 0., dz = 0., dr = 0.;
 
@@ -146,6 +153,28 @@ double mcmd::Boltzmann(double _x, double _y, double _z, unsigned int ip) {
     }
   }
   return 4. * ene;
+}
+
+void mcmd::Reset(unsigned int iblk) {
+  // Reset block averages
+  // we choose to lookup the maps' elements with .at for safety:
+  // If you access a key using the indexing operator [] that is
+  // not currently a part of a map, then it automatically adds
+  // a key for you!!
+  if (iblk == 0) {
+    for (auto &el : props) {
+      glob_average.at(el) = 0.;
+      glob_average_sq.at(el) = 0.;
+    }
+    fill(g_histo_glob_ave.begin(), g_histo_glob_ave.end(), 0.);
+    fill(g_histo_glob_ave_sq.begin(), g_histo_glob_ave_sq.end(), 0.);
+  }
+  for (auto &el : props) {
+    block_average.at(el) = 0.;
+  }
+  fill(g_histo_block_ave.begin(), g_histo_block_ave.end(), 0.);
+  attempted = 0.;
+  accepted = 0.;
 }
 
 void mcmd::Move() {
@@ -177,13 +206,13 @@ void mcmd::Move() {
   attempted++;
 }
 void mcmd::Measure(unsigned int istep) {
-  double v = 0., w = 0., vij = 0., wij = 0., dx = 0., dy = 0., dz = 0., dr = 0.;
+  double v = 0., w = 0., dx = 0., dy = 0., dz = 0., dr = 0.;
+  unsigned int cf = 0;
 
-  for (auto &el : g_histo)
-    el = 0.;
+  fill(g_histo.begin(), g_histo.end(), 0.);
 
   for (int i{}; i < npart - 1; ++i) {
-    for (int j{1}; j < npart; ++j) {
+    for (int j{i + 1}; j < npart; ++j) {
       // distance i-j in pbc
       dx = Pbc(x[i] - x[j]);
       dy = Pbc(y[i] - y[j]);
@@ -191,11 +220,138 @@ void mcmd::Measure(unsigned int istep) {
 
       dr = sqrt(dx * dx + dy * dy + dz * dz);
 
-      for (int k{}; k < nbins; ++k) {
-        if (dr > bin_size * k && dr < bin_size * (k + 1)) {
-          g_histo[k] = 3. / (2 * M_PI);
-        }
+      if (dr < box * 0.5) {
+        cf = static_cast<unsigned int>((dr * nbins) / (box * 0.5));
+        g_histo[cf] += 2;
+      }
+
+      if (dr < rcut) {
+        v += 1. / pow(dr, 12) - 1. / pow(dr, 6);
+        w += 1. / pow(dr, 12) - 0.5 / pow(dr, 6);
       }
     }
   }
+  walker.at("energy") = 4. * v;
+  walker.at("pressure") = 48. * w / 3.;
+
+  if (instantenous) {
+    double e = walker.at("energy") / static_cast<double>(npart) + vtail;
+    double p =
+        rho * temp +
+        (walker.at("pressure") + ptail + static_cast<double>(npart)) / vol;
+    ist_pot << istep << " " << e << endl;
+    ist_pres << istep << " " << p << endl;
+  }
+}
+
+void mcmd::Accumulate() {
+  for (auto &el : props) {
+    block_average.at(el) += walker.at(el);
+  }
+  for (int i{}; i < nbins; ++i) {
+    g_histo_block_ave[i] += g_histo[i];
+  }
+}
+
+void mcmd::Averages(unsigned int iblk) {
+
+  cout << "Block number " << iblk << endl;
+  cout << "Acceptance rate " << accepted / attempted << endl << endl;
+
+  // Potential energy
+  double stima_pot, err_pot;
+  stima_pot =
+      (block_average.at("energy") / nstep) / static_cast<double>(npart) + vtail;
+  glob_average.at("energy") += stima_pot;
+  glob_average_sq.at("energy") += stima_pot * stima_pot;
+  err_pot =
+      Error(glob_average.at("energy"), glob_average_sq.at("energy"), iblk);
+  Epot << " " << iblk << " " << stima_pot << " "
+       << glob_average.at("energy") / static_cast<double>(iblk) << " "
+       << err_pot << endl;
+
+  // Pressure
+  double stima_pres, err_pres;
+  stima_pres = rho * temp + ((block_average.at("pressure") / nstep) +
+                             ptail * static_cast<double>(npart)) /
+                                vol;
+  glob_average.at("pressure") += stima_pres;
+  glob_average_sq.at("pressure") += stima_pres * stima_pres;
+  err_pres =
+      Error(glob_average.at("pressure"), glob_average_sq.at("pressure"), iblk);
+  Pres << " " << iblk << " " << stima_pres << " "
+       << glob_average.at("pressure") / static_cast<double>(iblk) << " "
+       << err_pres << endl;
+
+  // Radial distribution
+  double stima_g, norm_g, err_g;
+  for (int i{}; i < nbins; ++i) {
+    double bin_size = (box * 0.5) / nbins;
+    norm_g = ((4. * M_PI) / 3) * npart * rho *
+             (pow(r_range[i + 1], 3) - pow(r_range[i], 3));
+    stima_g = (g_histo_block_ave[i] / nstep) / norm_g;
+    g_histo_glob_ave[i] += stima_g;
+    g_histo_glob_ave_sq[i] += stima_g * stima_g;
+    err_g = Error(g_histo_glob_ave[i], g_histo_glob_ave_sq[i], iblk);
+    Gave << g_histo_glob_ave[i] << " ";
+    Gerr << err_g << " ";
+    Binn << i * bin_size + bin_size / 2. << " ";
+  }
+
+  Gave << endl;
+  Gerr << endl;
+  Binn << endl;
+}
+
+void mcmd::ConfXYZ(unsigned int nconf) {
+  ofstream WriteXYZ("frames/config_" + to_string(nconf) + ".xyz");
+
+  if (WriteXYZ.is_open()) {
+    WriteXYZ << npart << endl;
+    WriteXYZ << "This is only a comment!" << endl;
+    for (int i{}; i < npart; ++i) {
+      WriteXYZ << "LJ  " << Pbc(x[i]) << "   " << Pbc(y[i]) << "   "
+               << Pbc(z[i]) << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open output XYZ file." << endl;
+    exit(1);
+  }
+  WriteXYZ.close();
+}
+
+void mcmd::ConfFinal() const {
+  ofstream WriteConf("config.final");
+
+  if (WriteConf.is_open()) {
+    cout << "Print configuration to config.final" << endl;
+    for (int i{}; i < npart; i++) {
+      WriteConf << x[i] / box << " " << y[i] / box << " " << z[i] / box << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open conf.final" << endl;
+    exit(1);
+  }
+  WriteConf.close();
+}
+
+void mcmd::Run() {
+  unsigned int nconf = 1;
+  // Simulation
+  for (int iblk{1}; iblk <= nblk; ++iblk) {
+    Reset(iblk); // Reset block averages
+    for (int istep{1}; istep <= nstep; ++istep) {
+      Move();
+      Measure(istep);
+      Accumulate(); // Update block averages
+
+      if (istep % 10 == 0) {
+        ConfXYZ(nconf);
+        nconf++;
+      }
+    }
+    Averages(iblk); // Print results for current block
+  }
+  ConfFinal(); // Write final configuration
+  rnd.SaveSeed();
 }
