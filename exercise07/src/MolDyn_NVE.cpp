@@ -420,6 +420,13 @@ void MolDyn_NVE::BlockingResults() {
   for (auto &elem : est_press) {
     elem /= block_size;
   }
+  for (int i{}; i < g_histo.size(); ++i) {
+    for (int j{}; j < g_histo[i].size(); ++j) {
+      double norm_g = ((4. * M_PI) / 3) * npart * rho *
+                      (pow(r_range[j + 1], 3) - pow(r_range[j], 3));
+      g_histo[i][j] /= block_size * norm_g;
+    }
+  }
 
   vector<double> pot_err = blocking_error(est_pot);
   vector<double> kin_err = blocking_error(est_kin);
