@@ -25,7 +25,6 @@ add_executable(ex03.1
 add_library(myLibrary
     src/random.cpp
     src/myStatFunc.cpp
-    src/randomWalk.cpp
 )
 
 # This is needed if we keep .h files in the "include" directory
