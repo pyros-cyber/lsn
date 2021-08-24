@@ -80,8 +80,12 @@ public:
    * @brief Runs a simulation using the Verlet algorithm
    *
    */
-  ~MolDyn_NVE();
   void RunSimulation();
+  /**
+   * @brief Destroys a MolDyn_NVE object
+   *
+   */
+  ~MolDyn_NVE();
 };
 
 #endif

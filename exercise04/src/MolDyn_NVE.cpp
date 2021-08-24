@@ -127,9 +127,9 @@ MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile)
   // fs: velocity scale factor
   double sumv_sq = 0., fs;
   for (int i{}; i < npart; ++i) {
-    vx[i] = vx[i] - sumv[0];
-    vy[i] = vy[i] - sumv[1];
-    vz[i] = vz[i] - sumv[2];
+    vx[i] -= sumv[0];
+    vy[i] -= sumv[1];
+    vz[i] -= sumv[2];
 
     sumv_sq += vx[i] * vx[i] + vy[i] * vy[i] + vz[i] * vz[i];
   }
