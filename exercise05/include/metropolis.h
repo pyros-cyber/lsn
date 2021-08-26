@@ -9,6 +9,7 @@
 using namespace std;
 /**
  * @brief My implementation of the Metropolis Algorithm
+ * for the hydrogen atom probability distributions
  *
  */
 struct Metropolis {
@@ -53,7 +54,7 @@ struct Metropolis {
     return rnd.Gauss(initial_coordinate, step / 2.);
   }
   /**
-   * @brief One step of the algorithm. Accept to functions, representing the
+   * @brief One step of the algorithm. Accept two functions, representing the
    * transition probability and the distribution function used to decide if the
    * point is accepted or no
    *
