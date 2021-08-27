@@ -7,7 +7,6 @@ then
 	echo -e "Finish equilibration"
 fi
 
-
 echo -e "Changing directory to build dir..."
 cd build/
 
