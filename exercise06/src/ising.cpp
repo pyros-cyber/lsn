@@ -86,7 +86,6 @@ void Ising1D::Input() {
 }
 
 void Ising1D::Measure(int step) {
-  // int bin;
   double u = 0.0, m = 0.0;
 
   // cycle over spins
@@ -101,8 +100,6 @@ void Ising1D::Measure(int step) {
   walker.at("susceptibility") = m * m;
 
   if (step != 0) {
-    //    std::cout << "Acceptance rate " << accepted/attempted << std::endl <<
-    //    std::endl;
     ofstream EneIn, CapIn, MagIn, SusIn;
     EneIn.open("results/instant.ene.0", ios::app);
     CapIn.open("results/instant.cap.0", ios::app);
@@ -133,14 +130,6 @@ void Ising1D::Reset(int iblk) {
   // If you access a key using the indexing operator [] that is
   // not currently a part of a map, then it automatically adds
   // a key for you!!
-  /*
-  if (iblk == 0) {
-    for (auto &el : props) {
-      glob_average.at(el) = 0.;
-      glob_average2.at(el) = 0.;
-    }
-  }
-  */
   for (auto &el : props)
     block_average.at(el) = 0.;
 
@@ -202,7 +191,6 @@ void Ising1D::BlockAverages(int iblk) {
       stima_x =
           ((block_average.at("susceptibility") / blk_norm) / n_spin) / temp;
 
-    //stima_x = (beta * block_average.at("susceptibility") / blk_norm) / n_spin;
     glob_average.at("susceptibility") += stima_x;
     glob_average2.at("susceptibility") += stima_x * stima_x;
     err_x = Error(glob_average.at("susceptibility"),
