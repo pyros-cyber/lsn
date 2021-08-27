@@ -90,7 +90,7 @@ void Ising1D::Measure(int step) {
   double u = 0.0, m = 0.0;
 
   // cycle over spins
-  for (unsigned int i = 0; i < n_spin; ++i) {
+  for (int i{}; i < n_spin; ++i) {
     u += -J * spin_conf[i] * spin_conf[Pbc(i + 1)] -
          0.5 * h * (spin_conf[i] + spin_conf[Pbc(i + 1)]);
     m += spin_conf[i];
@@ -133,13 +133,14 @@ void Ising1D::Reset(int iblk) {
   // If you access a key using the indexing operator [] that is
   // not currently a part of a map, then it automatically adds
   // a key for you!!
+  /*
   if (iblk == 0) {
     for (auto &el : props) {
       glob_average.at(el) = 0.;
       glob_average2.at(el) = 0.;
     }
   }
-
+  */
   for (auto &el : props)
     block_average.at(el) = 0.;
 
@@ -178,9 +179,6 @@ void Ising1D::BlockAverages(int iblk) {
 
     stima_c = (block_average.at("capacity") / blk_norm) / n_spin;
     stima_c = (stima_c - stima_u * stima_u * n_spin) / (temp * temp);
-    //  stima_c = beta*beta*((block_average.at("capacity")/blk_norm)
-    //  -(std::pow(block_average.at("energy"),2)/blk_norm)); stima_c /=
-    //  (double)n_spin;
     glob_average.at("capacity") += stima_c;
     glob_average2.at("capacity") += stima_c * stima_c;
     err_c =
@@ -204,7 +202,7 @@ void Ising1D::BlockAverages(int iblk) {
       stima_x =
           ((block_average.at("susceptibility") / blk_norm) / n_spin) / temp;
 
-    stima_x = (beta * block_average.at("susceptibility") / blk_norm) / n_spin;
+    //stima_x = (beta * block_average.at("susceptibility") / blk_norm) / n_spin;
     glob_average.at("susceptibility") += stima_x;
     glob_average2.at("susceptibility") += stima_x * stima_x;
     err_x = Error(glob_average.at("susceptibility"),
