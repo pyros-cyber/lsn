@@ -93,17 +93,6 @@ mcmd::mcmd(string simParameters, string initial_configuration,
   }
   ReadConf.close();
 
-  // Evaluate potential energy and pressure of the initial configuration
-  Measure();
-  // Print initial values for the potential energy and pressure
-  cout << "Initial potential energy (with tail corrections) = "
-       << walker.at("energy") / npart + vtail << endl;
-  cout << "Virial                   (with tail corrections) = "
-       << walker.at("pressure") / npart + ptail << endl;
-  cout << "Pressure                 (with tail corrections) = "
-       << rho * temp + (walker.at("pressure") + npart * ptail) / vol << endl
-       << endl;
-
   /* OPENING OUTPUT STREAMS */
   Epot.open("results/epot.dat");
   Pres.open("results/pres.dat");
@@ -115,6 +104,17 @@ mcmd::mcmd(string simParameters, string initial_configuration,
     ist_pot.open("results/instant_epot.dat");
     ist_pres.open("results/instant_pres.dat");
   }
+
+  // Evaluate potential energy and pressure of the initial configuration
+  Measure();
+  // Print initial values for the potential energy and pressure
+  cout << "Initial potential energy (with tail corrections) = "
+       << walker.at("energy") / npart + vtail << endl;
+  cout << "Virial                   (with tail corrections) = "
+       << walker.at("pressure") / npart + ptail << endl;
+  cout << "Pressure                 (with tail corrections) = "
+       << rho * temp + (walker.at("pressure") + npart * ptail) / vol << endl
+       << endl;
 }
 
 mcmd::~mcmd() {
@@ -161,14 +161,6 @@ void mcmd::Reset(unsigned int iblk) {
   // If you access a key using the indexing operator [] that is
   // not currently a part of a map, then it automatically adds
   // a key for you!!
-  if (iblk == 0) {
-    for (auto &el : props) {
-      glob_average.at(el) = 0.;
-      glob_average_sq.at(el) = 0.;
-    }
-    fill(g_histo_glob_ave.begin(), g_histo_glob_ave.end(), 0.);
-    fill(g_histo_glob_ave_sq.begin(), g_histo_glob_ave_sq.end(), 0.);
-  }
   for (auto &el : props) {
     block_average.at(el) = 0.;
   }
@@ -192,18 +184,18 @@ void mcmd::Move() {
     x_new = Pbc(x[o] + delta * (rnd.Rannyu() - 0.5));
     y_new = Pbc(y[o] + delta * (rnd.Rannyu() - 0.5));
     z_new = Pbc(z[o] + delta * (rnd.Rannyu() - 0.5));
-  }
 
-  p = exp(beta + (Boltzmann(x_old, y_old, z_old, o) -
-                  Boltzmann(x_new, y_new, z_new, o)));
-  if (p >= rnd.Rannyu()) {
-    x[o] = x_new;
-    y[o] = y_new;
-    z[o] = z_new;
+    p = exp(beta * (Boltzmann(x_old, y_old, z_old, o) -
+                    Boltzmann(x_new, y_new, z_new, o)));
+    if (p >= rnd.Rannyu()) {
+      x[o] = x_new;
+      y[o] = y_new;
+      z[o] = z_new;
 
-    accepted++;
+      accepted++;
+    }
+    attempted++;
   }
-  attempted++;
 }
 void mcmd::Measure(unsigned int istep) {
   double v = 0., w = 0., dx = 0., dy = 0., dz = 0., dr = 0.;
