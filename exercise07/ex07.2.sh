@@ -82,8 +82,8 @@ sed -i 's/npart/108/g' input.gas
 sed -i 's/rho/0.05/g' input.gas
 sed -i 's/rcut/5.0/g' input.gas
 sed -i 's/delta/7.5/g' input.gas
-sed -i 's/nstep/2000/g' input.gas
-sed -i 's/n_blocks/20/g' input.gas
+sed -i 's/nstep/1000/g' input.gas
+sed -i 's/n_blocks/50/g' input.gas
 
 cp input.dummy input.liquid
 sed -i 's/temp/1.1/g' input.liquid
@@ -91,8 +91,8 @@ sed -i 's/npart/108/g' input.liquid
 sed -i 's/rho/0.8/g' input.liquid
 sed -i 's/rcut/2.5/g' input.liquid
 sed -i 's/delta/0.2/g' input.liquid
-sed -i 's/nstep/2000/g' input.liquid
-sed -i 's/n_blocks/20/g' input.liquid
+sed -i 's/nstep/1000/g' input.liquid
+sed -i 's/n_blocks/50/g' input.liquid
 
 cp input.dummy input.solid
 sed -i 's/temp/0.8/g' input.solid
@@ -100,8 +100,8 @@ sed -i 's/npart/108/g' input.solid
 sed -i 's/rho/1.1/g' input.solid
 sed -i 's/rcut/2.2/g' input.solid
 sed -i 's/delta/0.12/g' input.solid
-sed -i 's/nstep/2000/g' input.solid
-sed -i 's/n_blocks/20/g' input.solid
+sed -i 's/nstep/1000/g' input.solid
+sed -i 's/n_blocks/50/g' input.solid
 
 echo -e "Finished generating input files..."
 echo -e "Exiting directory..."
