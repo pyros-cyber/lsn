@@ -282,6 +282,8 @@ void mcmd::Averages(unsigned int iblk) {
     norm_g = ((4. * M_PI) / 3) * npart * rho *
              (pow(r_range[i + 1], 3) - pow(r_range[i], 3));
     stima_g = (g_histo_block_ave[i] / nstep) / norm_g;
+    cout << "norm = " << norm_g << " stima = " << stima_g << 
+      " stima non normalizzata = " << g_histo_block_ave[i] / nstep << endl;
     g_histo_glob_ave[i] += stima_g;
     g_histo_glob_ave_sq[i] += stima_g * stima_g;
     err_g = Error(g_histo_glob_ave[i], g_histo_glob_ave_sq[i], iblk);
