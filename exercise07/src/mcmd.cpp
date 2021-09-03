@@ -48,6 +48,7 @@ mcmd::mcmd(string simParameters, string initial_configuration,
   box = pow(vol, 1. / 3.);
   cout << "Volume of the simulation box = " << vol << endl;
   cout << "Edge of the simulation box = " << box << endl;
+  
 
   ReadInput >> rcut;
   cout << "Cutoff of the interatomic potential = " << rcut << endl << endl;
@@ -202,6 +203,10 @@ void mcmd::Measure(unsigned int istep) {
   unsigned int cf = 0;
 
   fill(g_histo.begin(), g_histo.end(), 0.);
+  //cout << "Printing g_histo, it should all be zeros..." << endl;
+  //for(int i{}; i < g_histo.size(); ++i){
+  //  cout << "g_histo[ " << i << " ] = " << g_histo[i] << endl;
+  //}
 
   for (int i{}; i < npart - 1; ++i) {
     for (int j{i + 1}; j < npart; ++j) {
@@ -216,13 +221,16 @@ void mcmd::Measure(unsigned int istep) {
         cf = static_cast<unsigned int>((dr * nbins) / (box * 0.5));
         g_histo[cf] += 2;
       }
-
       if (dr < rcut) {
         v += 1. / pow(dr, 12) - 1. / pow(dr, 6);
         w += 1. / pow(dr, 12) - 0.5 / pow(dr, 6);
       }
     }
   }
+  //cout << "Printing g_histo after measure..." << endl;
+  //for(int i{}; i < g_histo.size(); ++i){
+  //  cout << "g_histo[ " << i << " ] = " << g_histo[i] << endl;
+  //}
   walker.at("energy") = 4. * v;
   walker.at("pressure") = 48. * w / 3.;
 
@@ -276,18 +284,16 @@ void mcmd::Averages(unsigned int iblk) {
        << err_pres << endl;
 
   // Radial distribution
-  double stima_g, norm_g, err_g;
+  double norm_g, stima_g, err_g;
   for (int i{}; i < nbins; ++i) {
     double bin_size = (box * 0.5) / nbins;
     norm_g = ((4. * M_PI) / 3) * npart * rho *
              (pow(r_range[i + 1], 3) - pow(r_range[i], 3));
-    stima_g = (g_histo_block_ave[i] / nstep) / norm_g;
-    cout << "norm = " << norm_g << " stima = " << stima_g << 
-      " stima non normalizzata = " << g_histo_block_ave[i] / nstep << endl;
+    stima_g = g_histo_block_ave[i] / nstep / norm_g;
     g_histo_glob_ave[i] += stima_g;
     g_histo_glob_ave_sq[i] += stima_g * stima_g;
     err_g = Error(g_histo_glob_ave[i], g_histo_glob_ave_sq[i], iblk);
-    Gave << g_histo_glob_ave[i] << " ";
+    Gave << g_histo_glob_ave[i] / static_cast<double>(iblk) << " ";
     Gerr << err_g << " ";
     Binn << i * bin_size + bin_size / 2. << " ";
   }
@@ -338,7 +344,6 @@ void mcmd::Run() {
       Move();
       Measure(istep);
       Accumulate(); // Update block averages
-
       if (istep % 10 == 0) {
         ConfXYZ(nconf);
         nconf++;
