@@ -424,7 +424,7 @@ void MolDyn_NVE::BlockingResults() {
     for (int j{}; j < g_histo[i].size(); ++j) {
       double norm_g = ((4. * M_PI) / 3) * npart * rho *
                       (pow(r_range[j + 1], 3) - pow(r_range[j], 3));
-      g_histo[i][j] /= block_size * norm_g;
+      g_histo[i][j] = g_histo[i][j] / (block_size * norm_g);
     }
   }
 
@@ -433,6 +433,27 @@ void MolDyn_NVE::BlockingResults() {
   vector<double> temp_err = blocking_error(est_temp);
   vector<double> etot_err = blocking_error(est_etot);
   vector<double> press_err = blocking_error(est_press);
+  vector<vector<double>> g_histo_err(g_histo.size());
+  for (int i{}; i < g_histo.size(); ++i) {
+    g_histo_err[i] = blocking_error(g_histo[i]);
+  }
+
+  if (Gave.is_open() && Gerr.is_open() && Binn.is_open()){
+    for(int i{}; i < g_histo[0].size(); ++i) {
+        for(int j{}; j < g_histo.size(); ++j) {
+          double bin_size = (box * 0.5) / nbins;
+          Gave << g_histo[j][i] << " ";
+          Gerr << g_histo_err[j][i] << " ";
+          Binn << j * bin_size + bin_size * 0.5 << " ";
+        }
+        Binn << endl;
+        Gave << endl;
+        Gerr << endl;
+    }
+  } else {
+    cerr << "ERROR: unable to open output file." << endl;
+    exit(1);
+  }
 
   ofstream out("results/ave_epot.dat");
   if (out.is_open()) {

@@ -15,7 +15,7 @@ echo -e "and building.."
 cmake --build build
 echo -e "Generating input files for equilibration..."
 echo -e "Changing directory to md-configurations..."
-cd md-configurations
+cd md-configurations/mc
 cp input.dummy input.gas
 sed -i 's/temp/1.2/g' input.gas
 sed -i 's/npart/108/g' input.gas
@@ -45,7 +45,7 @@ sed -i 's/n_blocks/1/g' input.solid
 
 echo -e "Finished generating input files..."
 echo -e "Exiting directory..."
-cd ..
+cd ../..
 
 echo -e "Changing directory to build dir..."
 cd build/
@@ -58,7 +58,7 @@ do
   mkdir -p ex07.1/$state/frames
   cp ../Primes ex07.1/$state/Primes
   cp ../seed.in ex07.1/$state/seed.in
-  cp ../md-configurations/input.$state ex07.1/$state/input.$state
+  cp ../md-configurations/mc/input.$state ex07.1/$state/input.$state
   cp ../md-configurations/config.0 ex07.1/$state/config.0
   cp montecarlomd ex07.1/$state
   cd ex07.1/$state
@@ -73,7 +73,7 @@ echo -e "Exiting from build dir..."
 cd ..
 echo -e "Generating input files for restart..."
 echo -e "Changing directory to md-configurations..."
-cd md-configurations
+cd md-configurations/mc
 cp input.dummy input.gas
 sed -i 's/temp/1.2/g' input.gas
 sed -i 's/npart/108/g' input.gas
@@ -103,7 +103,7 @@ sed -i 's/n_blocks/1/g' input.solid
 
 echo -e "Finished generating input files..."
 echo -e "Exiting directory..."
-cd ..
+cd ../..
 
 echo -e "Changing directory to build dir..."
 cd build/
@@ -111,7 +111,7 @@ cd build/
 echo -e "Executing simulation..."
 for state in solid liquid gas
 do
-  cp ../md-configurations/input.$state ex07.1/$state/input.$state
+  cp ../md-configurations/mc/input.$state ex07.1/$state/input.$state
   cd ex07.1/$state
   ./montecarlomd restart -i input.$state --instant yes
   cd ..
