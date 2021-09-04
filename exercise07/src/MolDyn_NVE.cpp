@@ -84,15 +84,16 @@ void MolDyn_NVE::Input(string simParameters) {
   block_size = (nstep / measure_time_interval) / n_blocks;
   iblock = 0;
   imeasure = 0;
-
+  
+  bin_size = (box * 0.5) / nbins;
   g_histo.resize(nbins);
   for (auto &el : g_histo) {
     el.resize(n_blocks);
     fill(el.begin(), el.end(), 0.);
   }
-
-  r_range.resize(nbins + 1);
-  getRadiusRange(r_range);
+  
+  // r_range.resize(nbins + 1);
+  // getRadiusRange(r_range);
 }
 
 MolDyn_NVE::MolDyn_NVE(string simParameters, string configFile)
@@ -278,12 +279,12 @@ void MolDyn_NVE::ConfFinal(string filename) const {
   WriteConf.close();
 }
 
-void MolDyn_NVE::getRadiusRange(vector<double> &vct) {
-  double bin_size = (box * 0.5) / nbins;
-  for (int i{}; i < vct.size(); ++i) {
-    vct[i] = static_cast<double>(i) * bin_size;
-  }
-}
+//void MolDyn_NVE::getRadiusRange(vector<double> &vct) {
+//  double bin_size = (box * 0.5) / nbins;
+//  for (int i{}; i < vct.size(); ++i) {
+//    vct[i] = static_cast<double>(i) * bin_size;
+//  }
+//}
 
 // Move particles with Verlet algorithm
 void MolDyn_NVE::Move() {
@@ -356,9 +357,16 @@ void MolDyn_NVE::Measure() {
       dz = Pbc(zold[i] - zold[j]);
       dr = sqrt(dx * dx + dy * dy + dz * dz);
 
-      if (dr < box * 0.5) {
-        cf = static_cast<unsigned int>((dr * nbins) / (box * 0.5));
-        g_histo[cf][iblock] += 2;
+      //if (dr < box * 0.5) {
+      //  cf = static_cast<unsigned int>((dr * nbins) / (box * 0.5));
+      //  //cout << "cf = " << cf << " iblock = " << iblock << endl;
+      //  g_histo[cf][iblock] += 2;
+      //}
+      for (int k{}; k < nbins; ++k){
+        if(dr > bin_size*k && dr < bin_size*(k+1)){
+          g_histo[k][iblock] += 3. / (pow(bin_size+dr,3)-pow(dr,3)) / (2.*M_PI);
+          break;
+        }
       }
       if (dr < rcut) {
         // Potential energy
@@ -420,13 +428,21 @@ void MolDyn_NVE::BlockingResults() {
   for (auto &elem : est_press) {
     elem /= block_size;
   }
-  for (int i{}; i < g_histo.size(); ++i) {
-    for (int j{}; j < g_histo[i].size(); ++j) {
-      double norm_g = ((4. * M_PI) / 3) * npart * rho *
-                      (pow(r_range[j + 1], 3) - pow(r_range[j], 3));
-      g_histo[i][j] = g_histo[i][j] / (block_size * norm_g);
+  for(auto &elem : g_histo) {
+    for(auto &k : elem) {
+      k /= block_size;
     }
   }
+  //for (int i{}; i < g_histo.size(); ++i) {
+  //  for (int j{}; j < g_histo[i].size(); ++j) {
+  //    //cout << "r_range[" << j + 1 << "] = " << r_range[j + 1] << " r_range[" << j << "] = " << r_range[j] << endl;
+  //    double norm_g = ((4. * M_PI) / 3) * npart * rho *
+  //                    (pow(r_range[j + 1], 3) - pow(r_range[j], 3));
+  //    //cout << "g_histo[" << i << "][" << j << "] = " << g_histo[i][j] << " norm_g = " << norm_g << " block_size = " << block_size << endl;
+  //    g_histo[i][j] = g_histo[i][j] / block_size / norm_g;
+  //    //cout << "g_histo[" << i << "][" << j << "] = " << g_histo[i][j] << endl;
+  //  }
+  //}
 
   vector<double> pot_err = blocking_error(est_pot);
   vector<double> kin_err = blocking_error(est_kin);
@@ -437,13 +453,23 @@ void MolDyn_NVE::BlockingResults() {
   for (int i{}; i < g_histo.size(); ++i) {
     g_histo_err[i] = blocking_error(g_histo[i]);
   }
+  // for (int i{}; i < g_histo.size(); ++i) {
+  //   for (int j{}; j < g_histo[i].size(); ++j) {
+  //     cout << "g_histo[" << i << "][" << j << "] = " << g_histo[i][j] << " g_histo_err[" << i << "][" << j << "] = " << g_histo_err[i][j] << endl;
+  //   }
+  // }
+  vector<double> g_norm(g_histo[0].size(), 0.);
+  for(int j{}; j < g_norm.size(); ++j) {
+    for(int i{}; i < g_histo.size(); ++i){
+      g_norm[j] += g_histo[i][j];
+    }
+  }
 
   if (Gave.is_open() && Gerr.is_open() && Binn.is_open()){
     for(int i{}; i < g_histo[0].size(); ++i) {
         for(int j{}; j < g_histo.size(); ++j) {
-          double bin_size = (box * 0.5) / nbins;
-          Gave << g_histo[j][i] << " ";
-          Gerr << g_histo_err[j][i] << " ";
+          Gave << g_histo[j][i] / g_norm[i] << " ";
+          Gerr << g_histo_err[j][i] / g_norm[i] << " ";
           Binn << j * bin_size + bin_size * 0.5 << " ";
         }
         Binn << endl;

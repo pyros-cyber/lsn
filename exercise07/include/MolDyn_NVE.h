@@ -46,8 +46,9 @@ private:
   vector<vector<double>> g_histo;
   // # of bins for estimation of g(r)
   const int nbins;
+  double bin_size;
   // r range in each bin
-  vector<double> r_range;
+  // vector<double> r_range;
 
   // functions: I declare them as private because I will only call them
   // from methods inside the class itself
@@ -67,7 +68,7 @@ private:
   // computes and prints averages and statistical uncertaintes with blocking
   // method
   void BlockingResults();
-  void getRadiusRange(vector<double> &);
+  //void getRadiusRange(vector<double> &);
 
 public:
   /**
