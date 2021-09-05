@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   } else {
     _M = args::get(M);
   }
-  int L = M / N;
+  int L = _M / N;
   vector<double> psi_sq;
   ofstream out_en("energy.dat");
   ofstream out_psi("psi_sq.dat");
