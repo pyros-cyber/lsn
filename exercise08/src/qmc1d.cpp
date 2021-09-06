@@ -150,13 +150,15 @@ void initialize() {
 // The external potential. You can modify this function but don't forget
 // to modify its first and second derivatives too !
 double external_potential(double val) {
-  double k_elastic = 1;
-  return k_elastic * val * val / 2.0;
+  //	double k_elastic = 1;
+  //	return k_elastic*val*val/2.0;
+  return pow(val, 4) - 5. / 2. * val * val; // x^4-(5/2)x^2
 }
 
 double external_potential_prime(double val) {
-  double k_elastic = 1;
-  return k_elastic * val;
+  //	double k_elastic =1;
+  //	return k_elastic*val;
+  return 4. * pow(val, 3) - 5. * val; // x^4-5/2*x^2
 }
 
 double external_potential_second(double val) {
@@ -168,14 +170,18 @@ double external_potential_second(double val) {
 // You can modify this function but don't forget
 // to modify its second derivative below!
 double variationalWaveFunction(double v) {
-  double mu = 0.8, sigma = 0.62;
+  //	return 1.0;
+  // return exp(-0.5*v*v);
+  double mu = 0.79, sigma = 0.62; // x^4-5/2*x^2 best variational
   double sig2 = sigma * sigma;
   return exp(-pow(v - mu, 2) / (2. * sig2)) +
          exp(-pow(v + mu, 2) / (2. * sig2));
 }
 
 double variationalWaveFunction_second(double v) {
-  double mu = 0.8, sigma = 0.62;
+  //	return 0;
+  // return v*v*exp(-0.5*v*v) - exp(-0.5*v*v);
+  double mu = 0.79, sigma = 0.62; // x^4-5/2*x^2 best variational
   double sig2 = sigma * sigma;
   double xpm2 = pow(v + mu, 2), xmm2 = pow(v - mu, 2);
   return exp(-xpm2 / (2. * sig2)) *
