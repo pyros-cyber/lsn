@@ -10,9 +10,19 @@ project(ex08
     LANGUAGES CXX
 )
 
+find_package(ROOT 6.22 CONFIG REQUIRED)
+
 # Our "project" will be able to build an executable out of a C++ source file
 add_executable(main
     src/main.cpp
+)
+
+add_executable(qmc1d
+    src/qmc1d.cpp
+)
+
+add_executable(qmc1d_const
+    src/qmc1d_const.cpp
 )
 
 # Our project will be able to build a library
@@ -34,5 +44,19 @@ target_link_libraries(
     myLibrary
 )
 
+target_link_libraries(
+    qmc1d PUBLIC 
+    ROOT::Physics
+    myLibrary
+)
+
+target_link_libraries(
+    qmc1d_const PUBLIC 
+    ROOT::Physics
+    myLibrary
+)
+
 # Force the compiler to use the C++17 standard
 target_compile_features(main PUBLIC cxx_std_17)
+target_compile_features(qmc1d PUBLIC cxx_std_17)
+target_compile_features(qmc1d_const PUBLIC cxx_std_17)
