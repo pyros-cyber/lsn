@@ -1,8 +1,8 @@
 #include "TSP.h"
 
 Salesman::Salesman(shared_ptr<Random> _rnd, string _shape, int _Ncities,
-                   double _pair_prob = 0.5, double _multi_prob = 0.5,
-                   double _inv_prob = 0.5, double _shift_prob = 0.5)
+                   double _pair_prob, double _multi_prob, double _inv_prob,
+                   double _shift_prob)
     : rnd{_rnd} {
 
   Ncities = _Ncities;
@@ -121,7 +121,7 @@ void Salesman::Inversion() {
 }
 
 Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
-                       int _Ncities, double _cross_prob = 0.7)
+                       int _Ncities, double _cross_prob)
     : rnd{_rnd} {
   Npop = _Npop;
   Ncities = _Ncities;
@@ -135,7 +135,7 @@ Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
   }
 }
 
-Population::LossesAverage() {
+double Population::LossesAverage() {
   double av = 0.;
   for (int i{Npop - 1}; i > Npop / 2; --i) {
     av += Losses[i];
@@ -144,7 +144,7 @@ Population::LossesAverage() {
   return av;
 }
 
-Population::OrderPop() {
+void Population::OrderPop() {
 
   vector<Mileage> mileage(Npop);
   for (int i{}; i < Npop; ++i) {
@@ -208,4 +208,43 @@ vector<vector<int>> Population::Crossover() {
     offspring[1] = Pop[i2].Path;
   }
   return offspring;
+}
+
+void Population::Mutations() {
+  for (int i{}; i < Npop; ++i) {
+    Pop[i].PairPermutation();
+    Pop[i].Shift();
+    Pop[i].MultiPermutation();
+    Pop[i].Inversion();
+  }
+}
+
+void Population::Evolve(int gen, string shape) {
+  vector<vector<int>> offsprings(2);
+  vector<vector<int>> pop(Npop);
+
+  ofstream loss("results/loss_" + shape + ".dat");
+  ofstream lossave("results/loss_ave_" + shape + ".dat");
+  if (loss.is_open() && lossave.is_open()) {
+    for (int j{}; j < gen; ++j) {
+      for (int i{}; i < Npop / 2; ++i) {
+        offsprings = this->Crossover();
+        pop[2 * i] = offsprings[0];
+        pop[2 * i + 1] = offsprings[1];
+      }
+
+      for (int i{}; i < Npop; ++i) {
+        this->Pop[i].Path = pop[i];
+      }
+      this->Mutations();
+      this->OrderPop();
+      loss << j + 1 << " " << Losses[Npop - 1] << endl;
+      lossave << j + 1 << " " << LossesAverage() << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open output files! Exiting." << endl;
+    exit(1);
+  }
+  loss.close();
+  lossave.close();
 }

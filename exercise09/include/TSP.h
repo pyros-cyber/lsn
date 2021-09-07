@@ -22,6 +22,7 @@ public:
   vector<int> Path;
   vector<pair<double, double>> Cities;
 
+  Salesman() {}
   /**
    * @brief Construct a new Salesman object
    * @param _rnd: shared_ptr to Random object
@@ -32,7 +33,9 @@ public:
    * @param _inv_prob: probability of inversion
    * @param _shift_prob: probability of shift
    */
-  Salesman(shared_ptr<Random>, string, int, double, double, double, double);
+  Salesman(shared_ptr<Random>, string, int, double _pair_prob = 0.5,
+           double _multi_prob = 0.5, double _inv_prob = 0.5,
+           double _shift_prob = 0.5);
 
   /**
    * @brief Check function to check if Salesman fulfills the bonds
@@ -91,7 +94,7 @@ public:
   /**
    * @brief Construct a Population object
    */
-  Population(shared_ptr<Random>, string, int, int, double);
+  Population(shared_ptr<Random>, string, int, int, double _cross_prob = 0.7);
 
   /**
    * @brief Returns the average of the cost functions
