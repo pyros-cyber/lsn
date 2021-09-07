@@ -73,4 +73,57 @@ public:
    */
   void Inversion();
 };
+
+/**
+ * @brief Class representing a collection of Salesman(s)
+ */
+struct Population {
+private:
+  int Npop;
+  int Ncities;
+  double cross_prob;
+  shared_ptr<Random> rnd;
+
+public:
+  vector<Salesman> Pop;
+  vector<double> Losses;
+
+  /**
+   * @brief Construct a Population object
+   */
+  Population(shared_ptr<Random>, string, int, int, double);
+
+  /**
+   * @brief Returns the average of the cost functions
+   */
+  double LossesAverage();
+
+  /**
+   * @brief Crossover methods
+   */
+  void OrderPop();
+  inline int Selection() {
+    return static_cast<int>(Npop * pow(1. / 5, rnd->Rannyu()));
+  }
+  vector<vector<int>> Crossover();
+
+  /**
+   * @brief Mutations method
+   */
+  void Mutations();
+
+  /**
+   * @brief Evolution method used to actually evolve the population
+   * (a step of our genetic algorithm)
+   */
+  void Evolve(int, string);
+};
+
+/**
+ * @brief Class needed for sorting propergly the population
+ */
+struct Mileage {
+  Salesman Chromo;
+  double Miles;
+};
 #endif

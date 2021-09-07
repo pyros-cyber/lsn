@@ -119,3 +119,93 @@ void Salesman::Inversion() {
     }
   }
 }
+
+Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
+                       int _Ncities, double _cross_prob = 0.7)
+    : rnd{_rnd} {
+  Npop = _Npop;
+  Ncities = _Ncities;
+  cross_prob = _cross_prob;
+
+  Losses.resize(Npop);
+  fill(Losses.begin(), Losses.end(), 0.);
+
+  for (int i{}; i < Npop; ++i) {
+    Pop.push_back(Salesman(_rnd, _shape, Ncities));
+  }
+}
+
+Population::LossesAverage() {
+  double av = 0.;
+  for (int i{Npop - 1}; i > Npop / 2; --i) {
+    av += Losses[i];
+  }
+  av /= (Npop / 2 - 1);
+  return av;
+}
+
+Population::OrderPop() {
+
+  vector<Mileage> mileage(Npop);
+  for (int i{}; i < Npop; ++i) {
+    mileage[i].Chromo = Pop[i];
+    mileage[i].Miles = Pop[i].AbsoluteLoss();
+  }
+
+  sort(mileage.begin(), mileage.end(),
+       [](Mileage const &a, Mileage const &b) { return a.Miles > b.Miles; });
+
+  for (int i{}; i < Npop; ++i) {
+    Pop[i] = mileage[i].Chromo;
+    Losses[i] = mileage[i].Miles;
+  }
+}
+
+vector<vector<int>> Population::Crossover() {
+  vector<vector<int>> offspring(2);
+  vector<int> offspring1, offspring2;
+  int i1, i2, cut, start1 = 1, start2 = 1, elem;
+
+  i1 = Selection();
+  do {
+    i2 = Selection();
+  } while (i2 == i1);
+
+  if (rnd->Rannyu() < cross_prob) {
+    cut = rnd->RandInt(1, Ncities - 1);
+
+    offspring1 = Pop[i1].Path;
+    offspring2 = Pop[i2].Path;
+
+    for (int i{cut}; i < Ncities; ++i) {
+      for (int j{start1}; j < Ncities; ++j) {
+        elem = offspring2[j];
+        if (find(offspring1.begin(), offspring1.begin() + cut, elem) ==
+            offspring1.begin() + cut) {
+          offspring1[i] = elem;
+          start1++;
+          break;
+        } else {
+          start1++;
+        }
+      }
+      for (int j{start2}; j < Ncities; ++j) {
+        elem = Pop[i1].Path[j];
+        if (find(offspring2.begin(), offspring2.begin() + cut, elem) ==
+            offspring2.begin() + cut) {
+          offspring2[i] = elem;
+          start2++;
+          break;
+        } else {
+          start2++;
+        }
+      }
+    }
+    offspring[0] = offspring1;
+    offspring[1] = offspring2;
+  } else {
+    offspring[0] = Pop[i1].Path;
+    offspring[1] = Pop[i2].Path;
+  }
+  return offspring;
+}
