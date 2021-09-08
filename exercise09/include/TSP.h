@@ -33,9 +33,9 @@ public:
    * @param _inv_prob: probability of inversion
    * @param _shift_prob: probability of shift
    */
-  Salesman(shared_ptr<Random>, string, int, double _pair_prob = 0.1,
-           double _multi_prob = 0.1, double _inv_prob = 0.1,
-           double _shift_prob = 0.1);
+  Salesman(shared_ptr<Random>, string, int, double _pair_prob = 0.05,
+           double _multi_prob = 0.05, double _inv_prob = 0.05,
+           double _shift_prob = 0.05);
 
   /**
    * @brief Check function to check if Salesman fulfills the bonds
@@ -99,7 +99,7 @@ public:
   /**
    * @brief Construct a Population object
    */
-  Population(shared_ptr<Random>, string, int, int, double _cross_prob = 0.5);
+  Population(shared_ptr<Random>, string, int, int, double _cross_prob = 0.7);
 
   /**
    * @brief Returns the average of the cost functions
@@ -111,7 +111,7 @@ public:
    */
   void OrderPop();
   inline int Selection() {
-    return static_cast<int>(Npop * pow(rnd->Rannyu(), 1. / 5));
+    return static_cast<int>(Npop * pow(rnd->Rannyu(), 0.2));
   }
   vector<vector<int>> Crossover();
 
@@ -130,6 +130,7 @@ public:
 /**
  * @brief Class needed for sorting propergly the population
  */
+
 struct Mileage {
   Salesman Chromo;
   double Miles;

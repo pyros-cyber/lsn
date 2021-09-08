@@ -143,7 +143,7 @@ Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
     Pop.push_back(Salesman(_rnd, _shape, Ncities));
   }
 
-  /*vector<pair<double, double>> cities(Ncities);
+  vector<pair<double, double>> cities(Ncities);
 
   if (_shape == "circumference") {
     double theta;
@@ -152,18 +152,24 @@ Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
       cities[i].first = cos(theta);
       cities[i].second = sin(theta);
     }
+
     for (int i{}; i < Npop; ++i) {
       Pop[i].Cities = cities;
     }
   } else if (_shape == "square") {
+
     for (int i{}; i < Ncities; ++i) {
       cities[i].first = 2 * rnd->Rannyu() - 1.;
       cities[i].second = 2 * rnd->Rannyu() - 1.;
     }
-    for (unsigned int i = 0; i < Npop; ++i) {
+
+    for (int i{}; i < Npop; ++i) {
       Pop[i].Cities = cities;
     }
-  }*/
+  } else {
+    cerr << "ERROR: unknown shape. Exiting." << endl;
+    exit(1);
+  }
 }
 
 double Population::LossesAverage() {
@@ -245,12 +251,10 @@ vector<vector<int>> Population::Crossover() {
 
 void Population::Mutations() {
   for (int i{}; i < Npop; ++i) {
-    if (Pop[i].Check()) {
-      Pop[i].PairPermutation();
-      Pop[i].Shift();
-      Pop[i].MultiPermutation();
-      Pop[i].Inversion();
-    }
+    Pop[i].PairPermutation();
+    Pop[i].Shift();
+    Pop[i].MultiPermutation();
+    Pop[i].Inversion();
   }
 }
 
