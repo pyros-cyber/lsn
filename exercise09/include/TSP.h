@@ -33,9 +33,9 @@ public:
    * @param _inv_prob: probability of inversion
    * @param _shift_prob: probability of shift
    */
-  Salesman(shared_ptr<Random>, string, int, double _pair_prob = 0.5,
-           double _multi_prob = 0.5, double _inv_prob = 0.5,
-           double _shift_prob = 0.5);
+  Salesman(shared_ptr<Random>, string, int, double _pair_prob = 0.1,
+           double _multi_prob = 0.1, double _inv_prob = 0.1,
+           double _shift_prob = 0.1);
 
   /**
    * @brief Check function to check if Salesman fulfills the bonds
@@ -46,6 +46,11 @@ public:
    * between the cities visited by the Salesman
    */
   double AbsoluteLoss();
+  /**
+   * @brief Returns a vector of cities in the order that the Salesman
+   * went through them
+   */
+  vector<pair<double, double>> GetCities();
   /**
    * @brief Pbc for the Salesman's path
    */
@@ -94,7 +99,7 @@ public:
   /**
    * @brief Construct a Population object
    */
-  Population(shared_ptr<Random>, string, int, int, double _cross_prob = 0.7);
+  Population(shared_ptr<Random>, string, int, int, double _cross_prob = 0.5);
 
   /**
    * @brief Returns the average of the cost functions
@@ -106,7 +111,7 @@ public:
    */
   void OrderPop();
   inline int Selection() {
-    return static_cast<int>(Npop * pow(1. / 5, rnd->Rannyu()));
+    return static_cast<int>(Npop * pow(rnd->Rannyu(), 1. / 5));
   }
   vector<vector<int>> Crossover();
 

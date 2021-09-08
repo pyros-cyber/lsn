@@ -68,8 +68,17 @@ double Salesman::AbsoluteLoss() {
                 Cities[Path[PbcPath(i + 1)] - 1].second,
             2));
   }
+  // cout << loss << endl;
 
   return loss;
+}
+
+vector<pair<double, double>> Salesman::GetCities() {
+  vector<pair<double, double>> ordered_cities(Ncities);
+  for (int i{}; i < Ncities; ++i) {
+    ordered_cities[i] = Cities[Path[i] - 1];
+  }
+  return ordered_cities;
 }
 
 void Salesman::PairPermutation() {
@@ -133,6 +142,28 @@ Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
   for (int i{}; i < Npop; ++i) {
     Pop.push_back(Salesman(_rnd, _shape, Ncities));
   }
+
+  /*vector<pair<double, double>> cities(Ncities);
+
+  if (_shape == "circumference") {
+    double theta;
+    for (int i{}; i < Ncities; ++i) {
+      theta = rnd->Rannyu(0, 2 * M_PI);
+      cities[i].first = cos(theta);
+      cities[i].second = sin(theta);
+    }
+    for (int i{}; i < Npop; ++i) {
+      Pop[i].Cities = cities;
+    }
+  } else if (_shape == "square") {
+    for (int i{}; i < Ncities; ++i) {
+      cities[i].first = 2 * rnd->Rannyu() - 1.;
+      cities[i].second = 2 * rnd->Rannyu() - 1.;
+    }
+    for (unsigned int i = 0; i < Npop; ++i) {
+      Pop[i].Cities = cities;
+    }
+  }*/
 }
 
 double Population::LossesAverage() {
@@ -152,6 +183,9 @@ void Population::OrderPop() {
     mileage[i].Miles = Pop[i].AbsoluteLoss();
   }
 
+  /* We order the population on a fitness basis:
+   * the higher AbsoluteLoss, the lower the rank
+   */
   sort(mileage.begin(), mileage.end(),
        [](Mileage const &a, Mileage const &b) { return a.Miles > b.Miles; });
 
@@ -170,7 +204,6 @@ vector<vector<int>> Population::Crossover() {
   do {
     i2 = Selection();
   } while (i2 == i1);
-
   if (rnd->Rannyu() < cross_prob) {
     cut = rnd->RandInt(1, Ncities - 1);
 
@@ -179,7 +212,7 @@ vector<vector<int>> Population::Crossover() {
 
     for (int i{cut}; i < Ncities; ++i) {
       for (int j{start1}; j < Ncities; ++j) {
-        elem = offspring2[j];
+        elem = Pop[i2].Path[j];
         if (find(offspring1.begin(), offspring1.begin() + cut, elem) ==
             offspring1.begin() + cut) {
           offspring1[i] = elem;
@@ -212,17 +245,18 @@ vector<vector<int>> Population::Crossover() {
 
 void Population::Mutations() {
   for (int i{}; i < Npop; ++i) {
-    Pop[i].PairPermutation();
-    Pop[i].Shift();
-    Pop[i].MultiPermutation();
-    Pop[i].Inversion();
+    if (Pop[i].Check()) {
+      Pop[i].PairPermutation();
+      Pop[i].Shift();
+      Pop[i].MultiPermutation();
+      Pop[i].Inversion();
+    }
   }
 }
 
 void Population::Evolve(int gen, string shape) {
   vector<vector<int>> offsprings(2);
   vector<vector<int>> pop(Npop);
-
   ofstream loss("results/loss_" + shape + ".dat");
   ofstream lossave("results/loss_ave_" + shape + ".dat");
   if (loss.is_open() && lossave.is_open()) {

@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
     Population pop(make_shared<Random>(rnd), _shape, _Npop, _Ncities);
 
     for (int i{}; i < _Ncities; ++i) {
-      cities << pop.Pop[0].Cities[pop.Pop[0].Path[i] - 1].first << " "
-             << pop.Pop[0].Cities[pop.Pop[0].Path[i] - 1].second << endl;
+      cities << pop.Pop[0].GetCities()[i].first << " "
+             << pop.Pop[0].GetCities()[i].second << endl;
     }
     cities.close();
 
@@ -54,13 +54,13 @@ int main(int argc, char *argv[]) {
       cout << _Ncities << " cities on a " << _shape << ";" << endl;
       cout << "Population of " << _Npop << " salesmen;" << endl;
       cout << "Evolution of " << _Ngen << " generations. \n" << endl;
-      cout << "Best Initial loss value: " << pop.Losses[_Npop - 1] << endl;
+      cout << "Best initial loss value: " << pop.Losses[_Npop - 1] << endl;
 
       res << "------------------------------" << endl;
       res << _Ncities << " cities on a " << _shape << ";" << endl;
       res << "Population of " << _Npop << " salesmen;" << endl;
       res << "Evolution of " << _Ngen << " generations. \n" << endl;
-      res << "Best Initial loss value: " << pop.Losses[_Npop - 1] << endl;
+      res << "Best initial loss value: " << pop.Losses[_Npop - 1] << endl;
 
       pop.Evolve(_Ngen, _shape);
 
@@ -68,21 +68,14 @@ int main(int argc, char *argv[]) {
       res << "Best final loss value: " << pop.Losses[_Npop - 1] << endl;
 
       for (int i{}; i < _Ncities; ++i) {
-        cities
-            << pop.Pop[_Npop - 1].Cities[pop.Pop[_Npop - 1].Path[i] - 1].first
-            << "  "
-            << pop.Pop[_Npop - 1].Cities[pop.Pop[_Npop - 1].Path[i] - 1].second
-            << endl;
+        cities << pop.Pop[_Npop - 1].GetCities()[i].first << "  "
+               << pop.Pop[_Npop - 1].GetCities()[i].second << endl;
       }
 
-      cities << pop.Pop[_Npop - 1].Cities[pop.Pop[_Npop - 1].Path[0] - 1].first
-             << "  "
-             << pop.Pop[_Npop - 1].Cities[pop.Pop[_Npop - 1].Path[0] - 1].second
-             << endl;
+      cities << pop.Pop[_Npop - 1].GetCities()[0].first << "  "
+             << pop.Pop[_Npop - 1].GetCities()[0].second << endl;
 
       cities.close();
-      //  	losses.close();
-      //  	losses_ave.close();
 
     } else {
       cerr << "ERROR: can't open output files. Exiting." << endl;
