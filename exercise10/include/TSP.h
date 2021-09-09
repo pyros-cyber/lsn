@@ -38,6 +38,22 @@ public:
            double _shift_prob = 0.05);
 
   /**
+   * @brief Copy assygment custom operator
+   */
+  Salesman &operator=(const Salesman &other) {
+    if (this != &other) {
+      rnd = other.rnd;
+      Ncities = other.Ncities;
+      Path = other.Path;
+      Cities = other.Cities;
+      pair_prob = other.pair_prob;
+      multi_prob = other.multi_prob;
+      inv_prob = other.inv_prob;
+      shift_prob = other.shift_prob;
+    }
+    return *this;
+  }
+  /**
    * @brief Check function to check if Salesman fulfills the bonds
    */
   bool Check();
@@ -80,6 +96,14 @@ public:
    * @brief Invert elements
    */
   void Inversion();
+  /**
+   * @brief Simulated Annealing algorithm
+   * @param Initial: the starting Salesman
+   * @param shape: the shape of the world
+   * @param ntemp: number of temperatures to be considered
+   * @param nsteps: number of MC steps
+   */
+  void SimulatedAnnealing(Salesman&, string, int, int);
 };
 
 /**

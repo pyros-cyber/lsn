@@ -129,6 +129,48 @@ void Salesman::Inversion() {
   }
 }
 
+void Salesman::SimulatedAnnealing(Salesman &_Initial, string _shape, int _ntemp,
+                                  int _nsteps) {
+  double Ein, Efin, beta, p;
+  int accepted, attempted;
+  vector<double> acceptance;
+  ofstream loss("./results/sa_loss_" + _shape + ".dat");
+
+  if (loss.is_open()) {
+    for (int i{1}; i <= _ntemp; ++i) {
+      accepted = 0;
+      attempted = 0;
+      beta = i;
+      for (int j{}; j < _nsteps; ++j) {
+        *this = _Initial;
+        this->PairPermutation();
+        this->Shift();
+        this->MultiPermutation();
+        this->Inversion();
+
+        Ein = _Initial.AbsoluteLoss();
+        Efin = this->AbsoluteLoss();
+        p = min(1., exp(-beta * (Efin - Ein)));
+
+        if (this->rnd->Rannyu() < p) {
+          _Initial = *this;
+          accepted += 1;
+        }
+        attempted += 1;
+      }
+      acceptance.push_back(accepted / static_cast<double>(attempted));
+      loss << beta << " " << _Initial.AbsoluteLoss() << endl;
+    }
+  } else {
+    cerr << "ERROR: can't open output file. Exiting." << endl;
+    exit(1);
+  }
+  cout << "Accemptance rate is in: ["
+       << *min_element(acceptance.begin(), acceptance.end()) << ", "
+       << *max_element(acceptance.begin(), acceptance.end()) << "]\n"
+       << endl;
+}
+
 Population::Population(shared_ptr<Random> _rnd, string _shape, int _Npop,
                        int _Ncities, double _cross_prob)
     : rnd{_rnd} {
@@ -261,8 +303,8 @@ void Population::Mutations() {
 void Population::Evolve(int gen, string shape) {
   vector<vector<int>> offsprings(2);
   vector<vector<int>> pop(Npop);
-  ofstream loss("results/loss_" + shape + ".dat");
-  ofstream lossave("results/loss_ave_" + shape + ".dat");
+  ofstream loss("results/ga_loss_" + shape + ".dat");
+  ofstream lossave("results/ga_loss_ave_" + shape + ".dat");
   if (loss.is_open() && lossave.is_open()) {
     for (int j{}; j < gen; ++j) {
       for (int i{}; i < Npop / 2; ++i) {
