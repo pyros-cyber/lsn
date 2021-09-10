@@ -10,7 +10,7 @@ project(ex08
     LANGUAGES CXX
 )
 
-find_package(ROOT 6.22 CONFIG REQUIRED)
+find_package(ROOT 6.24 CONFIG REQUIRED)
 
 # Our "project" will be able to build an executable out of a C++ source file
 add_executable(main
