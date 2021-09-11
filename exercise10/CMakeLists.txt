@@ -10,11 +10,18 @@ project(ex09
     LANGUAGES CXX
 )
 
+find_package(MPI REQUIRED)
+
+message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
+
 # Our "project" will be able to build an executable out of a C++ source file
 add_executable(main
     src/main.cpp
 )
 
+add_executable(main-parallel
+    src/main-parallel.cpp
+)
 
 # Our project will be able to build a library
 add_library(myLibrary
@@ -29,11 +36,23 @@ target_include_directories(myLibrary PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(
+    myLibrary PUBLIC 
+    MPI::MPI_CXX
+)
+
 # Target commands tells which dependencies targer exec have
 target_link_libraries(
     main PUBLIC 
     myLibrary
 )
 
+target_link_libraries(
+    main-parallel PUBLIC 
+    myLibrary
+    MPI::MPI_CXX
+)
+
 # Force the compiler to use the C++17 standard
 target_compile_features(main PUBLIC cxx_std_17)
+target_compile_features(main-parallel PUBLIC cxx_std_17)
