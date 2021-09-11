@@ -328,3 +328,77 @@ void Population::Evolve(int gen, string shape) {
   loss.close();
   lossave.close();
 }
+
+void Population::ParallelEvolve(int _rank, int _Ngen, int _Nmigr, string _shape,
+                                MPI_Status *_status) {
+
+  vector<vector<int>> offsprings(2);
+  vector<vector<int>> pop(Npop);
+
+  vector<int> swaps{0, 1, 2, 3};
+  int tag1, tag2;
+  vector<int> path1(Ncities);
+  vector<int> path2(Ncities);
+
+  ofstream loss("./results/loss_" + _shape + "_" + to_string(_rank) + ".dat");
+  ofstream lossave("./results/loss_ave_" + _shape + "_" + to_string(_rank) +
+                   ".dat");
+
+  if (loss.is_open() && lossave.is_open()) {
+    for (int j{}; j < _Ngen; ++j) {
+      for (int i{}; i < Npop / 2; ++i) {
+        offsprings = this->Crossover();
+        pop[2 * i] = offsprings[0];
+        pop[2 * i + 1] = offsprings[1];
+      }
+
+      for (int i{}; i < Npop; ++i) {
+        this->Pop[i].Path = pop[i];
+      }
+      this->Mutations();
+      this->OrderPop();
+
+      loss << j + 1 << " " << Losses[Npop - 1] << endl;
+      lossave << j + 1 << " " << LossesAverage() << endl;
+
+      if (j % _Nmigr == 0) {
+        // We randomly shuffle the vector swaps, which we will use to
+        // swap the best individuals between the processes
+        if (_rank == 0) {
+          random_shuffle(swaps.begin(), swaps.end());
+        }
+        MPI_Bcast(&swaps.front(), 4, MPI_INT, 0, MPI_COMM_WORLD);
+
+        // We swap the best individuals between the processes with rank swaps[i]
+        // and swaps[i+1] (swaps[0] with swaps[1] and swaps[2] with swaps[3])
+        for (int k{}; k < 2; ++k) {
+          tag1 = 2 * k;
+          tag2 = 2 * k + 1;
+          if (_rank == swaps[2 * k]) {
+            path1 = this->Pop[Npop - 1].Path;
+            MPI_Send(&path1.front(), Ncities, MPI_INT, swaps[2 * k + 1], tag1,
+                     MPI_COMM_WORLD);
+            MPI_Recv(&path2.front(), Ncities, MPI_INT, swaps[2 * k + 1], tag2,
+                     MPI_COMM_WORLD, _status);
+            this->Pop[Npop - 1].Path = path2;
+          }
+
+          if (_rank == swaps[2 * k + 1]) {
+            path2 = this->Pop[Npop - 1].Path;
+            MPI_Recv(&path1.front(), Ncities, MPI_INT, swaps[2 * k], tag1,
+                     MPI_COMM_WORLD, _status);
+            MPI_Send(&path2.front(), Ncities, MPI_INT, swaps[2 * k], tag2,
+                     MPI_COMM_WORLD);
+            this->Pop[Npop - 1].Path = path1;
+          }
+        }
+        this->OrderPop();
+      }
+    }
+  } else {
+    cerr << "ERROR: can't open output files! Exiting." << endl;
+    exit(1);
+  }
+  loss.close();
+  lossave.close();
+}

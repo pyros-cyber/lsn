@@ -4,6 +4,7 @@
 #include "random.h"
 #include <algorithm>
 #include <memory>
+#include "mpi.h"
 #include <utility>
 #include <vector>
 
@@ -38,7 +39,7 @@ public:
            double _shift_prob = 0.05);
 
   /**
-   * @brief Copy assygment custom operator
+   * @brief Copy assigment custom operator
    */
   Salesman &operator=(const Salesman &other) {
     if (this != &other) {
@@ -103,7 +104,7 @@ public:
    * @param ntemp: number of temperatures to be considered
    * @param nsteps: number of MC steps
    */
-  void SimulatedAnnealing(Salesman&, string, int, int);
+  void SimulatedAnnealing(Salesman &, string, int, int);
 };
 
 /**
@@ -149,6 +150,18 @@ public:
    * (a step of our genetic algorithm)
    */
   void Evolve(int, string);
+
+  /**
+   * @brief Parallel evolution method, using MPI
+   * @param _rank: rank of the process
+   * @param _Ngen: number of generations
+   * @param _Nmigr: number of generations at to migrate
+   * @param _shape: shape of the world
+   * @param _status: status of the parallel computation
+   *
+   */
+  void ParallelEvolve(int _rank, int _Ngen, int _Nmigr, string _shape,
+                      MPI_Status *_status);
 };
 
 /**
