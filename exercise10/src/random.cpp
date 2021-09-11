@@ -13,6 +13,33 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 using namespace std;
 
 Random ::Random() {}
+Random ::Random(int rank) {
+  int seed[4];
+  int p1, p2;
+  ifstream Primes("Primes");
+  for (int i{}; i <= rank; ++i) {
+    if (Primes.is_open()) {
+      Primes >> p1 >> p2;
+    } else
+      cerr << "PROBLEM: Unable to open Primes" << endl;
+  }
+  Primes.close();
+
+  ifstream input("seed.in");
+  string property;
+  if (input.is_open()) {
+    while (!input.eof()) {
+      input >> property;
+      if (property == "RANDOMSEED") {
+        input >> seed[0] >> seed[1] >> seed[2] >> seed[3];
+        SetRandom(seed, p1, p2);
+      }
+    }
+    input.close();
+  } else
+    cerr << "PROBLEM: Unable to open seed.in" << endl;
+}
+
 Random ::Random(string primes, string seed) {
   int s[4];
   int p1 = 0, p2 = 0;

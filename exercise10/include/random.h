@@ -26,6 +26,7 @@ protected:
 public:
   // constructors
   Random();
+  Random(int);
   Random(std::string, std::string);
   // destructor
   ~Random();
