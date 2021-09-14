@@ -21,7 +21,7 @@ $ conda env create -n <envname> -f requirements.yml
 ```
 
 ### Directories structure ###
-The general structure of each C++ directory is, e.g:
+The general structure of each C++ project directory is, e.g:
 ```
 $ tree exercise01/
 exercise01
