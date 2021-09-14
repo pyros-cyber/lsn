@@ -56,5 +56,5 @@ For certain exercises bash scripts that compile and run the program are provided
 > The CLI interface of all the exercises has been built using [Taywee/args](https://github.com/Taywee/args)
 
 ## License ##
-This repository is licensed under the terms of the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) and is available for free. 
+This repository is licensed under the terms of the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) and is available for free. For more details see [here](https://github.com/pyros-cyber/lsn/blob/main/LICENSE.md) 
 
