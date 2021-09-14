@@ -48,7 +48,6 @@ mcmd::mcmd(string simParameters, string initial_configuration,
   box = pow(vol, 1. / 3.);
   cout << "Volume of the simulation box = " << vol << endl;
   cout << "Edge of the simulation box = " << box << endl;
-  
 
   ReadInput >> rcut;
   cout << "Cutoff of the interatomic potential = " << rcut << endl << endl;
@@ -203,8 +202,8 @@ void mcmd::Measure(unsigned int istep) {
   unsigned int cf = 0;
 
   fill(g_histo.begin(), g_histo.end(), 0.);
-  //cout << "Printing g_histo, it should all be zeros..." << endl;
-  //for(int i{}; i < g_histo.size(); ++i){
+  // cout << "Printing g_histo, it should all be zeros..." << endl;
+  // for(int i{}; i < g_histo.size(); ++i){
   //  cout << "g_histo[ " << i << " ] = " << g_histo[i] << endl;
   //}
 
@@ -227,8 +226,8 @@ void mcmd::Measure(unsigned int istep) {
       }
     }
   }
-  //cout << "Printing g_histo after measure..." << endl;
-  //for(int i{}; i < g_histo.size(); ++i){
+  // cout << "Printing g_histo after measure..." << endl;
+  // for(int i{}; i < g_histo.size(); ++i){
   //  cout << "g_histo[ " << i << " ] = " << g_histo[i] << endl;
   //}
   walker.at("energy") = 4. * v;
